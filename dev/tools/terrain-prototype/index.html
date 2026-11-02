@@ -565,8 +565,8 @@ function newWind(first) {
 function gaugeGeom(P) {
   const RD = window.RIG_DATA, k = FEEL.botScale.v, A = RD.artScale * k, c = Math.cos(P.rtilt), sn = Math.sin(P.rtilt);
   const mx = RD.launcher.mount[0] * A * P.dir, my = RD.launcher.mount[1] * A;
-  const len = Math.hypot(RD.launcher.muzzle[0], RD.launcher.muzzle[1]) * A;          // pivot -> cannon tip
-  const rIn = len + 4, rOut = rIn + FEEL.gaugeW.v;
+  const len = Math.hypot(RD.launcher.muzzle[0], RD.launcher.muzzle[1]) * (RD.partScale || 1) * A;   // pivot -> cannon tip (parts drawn at partScale, #99)
+  const rIn = len + 8, rOut = rIn + FEEL.gaugeW.v;                                    // +8: clear of the wide cannon mouth
   return { cx: P.rx + mx * c - my * sn, cy: P.ry + FEEL.sink.v + mx * sn + my * c, rIn, rOut };
 }
 function muzzleWorld(P = me) {
