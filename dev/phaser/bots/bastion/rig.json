@@ -1,0 +1,98 @@
+{
+  "id": "bastion",
+  "name": "Bastion",
+  "units": "concept px (= part px x scale); origin = ground under body centre; +y down",
+  "artScale": 0.11019,
+  "partScale": 1.05,
+  "parts": {
+    "body": "body.png",
+    "launcher": "launcher.png",
+    "hub": "hub.png",
+    "rider_front": "rider_front.png"
+  },
+  "partScaleOverrides": {},
+  "body": {
+    "pivot": [
+      487.0,
+      322.0
+    ],
+    "at": [
+      0.0,
+      -448.1
+    ]
+  },
+  "hub": {
+    "pivot": [
+      54.5,
+      54.0
+    ],
+    "at": [
+      137.6,
+      -767.2
+    ],
+    "scale": 1
+  },
+  "launcher": {
+    "pivot": [
+      5,
+      67.0
+    ],
+    "mount": [
+      137.6,
+      -767.2
+    ],
+    "aimBase": 21.344848600105177,
+    "axisDeg": -0.89,
+    "muzzle": [
+      275.3,
+      4.299999999999997
+    ],
+    "visualMin": 0,
+    "visualMax": 50,
+    "aimMin": 15,
+    "aimMax": 70,
+    "reach": 301.5
+  },
+  "seed": null,
+  "legs": [],
+  "farLegs": null,
+  "rider": {
+    "seat": [
+      -51.6,
+      -613.7
+    ],
+    "height": 615.0,
+    "front": {
+      "pivot": [
+        252.0,
+        71.5
+      ],
+      "at": [
+        -2.8,
+        -667.1
+      ]
+    },
+    "clipY": -652.8
+  },
+  "blink": null,
+  "drawOrder": [
+    "farLegs",
+    "legs",
+    "launcher",
+    "body",
+    "seedGlow",
+    "rider (waist-up)",
+    "riderFront",
+    "hub"
+  ],
+  "locomotion": "hover",
+  "hover": {
+    "gap": 110,
+    "circle": [
+      340,
+      60
+    ],
+    "bob": 5,
+    "color": "#4ff0ff"
+  }
+}
