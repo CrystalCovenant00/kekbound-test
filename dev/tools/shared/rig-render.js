@@ -36,7 +36,8 @@
     const sway = walking ? Math.sin(ph) * o.sway * Math.PI / 180 * st.moving : 0;
     const kick = (1 - ease(st.kickT * 2.5)) * o.kick * Math.PI / 180;
     const sq = (walking ? Math.max(0, Math.cos(2 * ph)) * o.squash * st.moving : 0) + (1 - ease(st.recoilT * 3)) * o.squash;
-    const P = (k, pivot) => { const i = R.parts[k]; if (ok(i)) c.drawImage(i, -pivot[0], -pivot[1]); };
+    const PS = RD.partScale || 1;   // #99: rig units = part px x partScale (the builder's assembly check draws parts this way)
+    const P = (k, pivot) => { const i = R.parts[k]; if (ok(i)) { c.save(); c.scale(PS, PS); c.drawImage(i, -pivot[0], -pivot[1]); c.restore(); } };
     c.save(); c.scale(A, A);
     const bob = (bobWalk + bobIdle) / A, hipBob = bobWalk * 0.4 / A;
     const swing = o.legSwing * Math.PI / 180 * st.moving, legAng = p => walking ? Math.sin(ph + p) * swing : 0;
@@ -99,7 +100,7 @@
   }
   // muzzle position in display px (1080p units) relative to the ground point, before the caller's flip/tilt
   function muzzle(R, aim) {
-    const RD = R.RD, A = RD.artScale, L = RD.launcher, a = -visualAim(RD, aim) * Math.PI / 180, [ux, uy] = L.muzzle;
+    const RD = R.RD, A = RD.artScale, L = RD.launcher, a = -visualAim(RD, aim) * Math.PI / 180, PS = RD.partScale || 1, ux = L.muzzle[0] * PS, uy = L.muzzle[1] * PS;   // #99
     return [(L.mount[0] + ux * Math.cos(a) - uy * Math.sin(a)) * A, (L.mount[1] + ux * Math.sin(a) + uy * Math.cos(a)) * A];
   }
   window.KekRig = { load, draw, muzzle, visualAim, setCannonMode: m => { cannonMode = m; }, setAxisTrim: d => { axisTrim = d; } };
