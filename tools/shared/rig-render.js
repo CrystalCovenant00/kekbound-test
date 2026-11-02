@@ -76,11 +76,14 @@
       R.riderCache = R.riderCache || {};
       let comp = R.riderCache[key];
       if (!comp) {
-        const layers = [R.bases[rider.base], ...['body', 'head'].map(sl => R.items[sl][rider[sl]])].filter(ok);
-        if (layers.length && layers.every(ok)) {
-          comp = document.createElement('canvas'); comp.width = layers[0].naturalWidth; comp.height = cy;
-          const x = comp.getContext('2d'); for (const im of layers) x.drawImage(im, 0, 0, im.naturalWidth, cy, 0, 0, im.naturalWidth, cy);
-          R.riderCache[key] = comp;
+        // only cache once EVERY requested layer has loaded (online, hair/outfits arrive after the base; caching early lost them)
+        const want = [R.bases[rider.base], ...['body', 'head'].filter(sl => rider[sl]).map(sl => R.items[sl][rider[sl]])];
+        const layers = want.filter(Boolean);
+        const ready = layers.filter(ok);
+        if (ready.length && ok(layers[0])) {   // base loaded: draw what's ready; cache only when everything is in
+          comp = document.createElement('canvas'); comp.width = ready[0].naturalWidth; comp.height = cy;
+          const x = comp.getContext('2d'); for (const im of ready) x.drawImage(im, 0, 0, im.naturalWidth, cy, 0, 0, im.naturalWidth, cy);
+          if (ready.length === layers.length) R.riderCache[key] = comp;
         }
       }
       if (comp) {

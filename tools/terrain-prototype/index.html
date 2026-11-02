@@ -203,8 +203,9 @@ function footGround(x, yRef, reach) {
 // FEEL.climb degrees and stops at near-vertical lips.
 const bot = { rx: null, ry: null, rtilt: 0, lastAngle: null, lastPower: null, x: 0, y: 0, vy: 0, dir: 1, aim: 35, power: 0, charging: false, tilt: 0, ko: false, air: true,
               moving: 0, phase: 0, t: 0, recoilT: 1, kickT: 1, blocked: false, feetY: [0, 0] };
-function spawnBot() { const s = MAP.spawns[0]; Object.assign(bot, { x: s[0], y: s[1], vy: 0, ko: false, air: true, tilt: 0, rx: s[0], ry: s[1], rtilt: 0, dead: false, dir: 1 }); msg.textContent = ''; }
-function spawnFoe() { const s = MAP.spawns[1]; Object.assign(foe, { x: s[0], y: s[1], vy: 0, ko: false, gone: false, air: true, tilt: 0, rx: s[0], ry: s[1], rtilt: 0, dead: false, dir: -1, power: 0, charging: false }); }
+const MAX_HP = 3;   // hits to KO (#90)
+function spawnBot() { const s = MAP.spawns[0]; Object.assign(bot, { hp: MAX_HP, hpShow: MAX_HP, x: s[0], y: s[1], vy: 0, ko: false, air: true, tilt: 0, rx: s[0], ry: s[1], rtilt: 0, dead: false, dir: 1 }); msg.textContent = ''; }
+function spawnFoe() { const s = MAP.spawns[1]; Object.assign(foe, { hp: MAX_HP, hpShow: MAX_HP, x: s[0], y: s[1], vy: 0, ko: false, gone: false, air: true, tilt: 0, rx: s[0], ry: s[1], rtilt: 0, dead: false, dir: -1, power: 0, charging: false }); }
 function stepUnit(P, keys, local) {
   if (P.dead) return;
   P.t += 1 / 60; P.recoilT += 1 / 60; P.kickT += 1 / 60;
@@ -301,7 +302,7 @@ const Net = {
   event(e) { if (this.mode === 'host' && this.inMatch) this.send({ t: 'ev', e }); },
   host() {
     this.mode = 'host'; this.code = (new URLSearchParams(location.search).get('code')) || this.newCode(); me = bot; setRiders();
-    showRoom(); roomMsg('Opening room…');
+    showRoom(); updateRoom(); roomMsg('Opening room…');
     this.peer = new Peer('kekbound-room-' + this.code, { debug: 1 });
     this.peer.on('open', () => roomMsg('Share this code with your friend'));
     this.peer.on('error', e => roomMsg('Network error: ' + e.type));
@@ -397,7 +398,7 @@ document.getElementById('copyCode').onclick = () => copyText(Net.code || '', 'Co
 document.getElementById('leaveBtn').onclick = () => location.reload();
 
 // ----- host -> guest snapshots, guest rendering -----
-const PACK = ['x', 'y', 'rx', 'ry', 'rtilt', 'dir', 'aim', 'moving', 'phase', 'air', 'dead', 'ko', 'power', 'charging', 'recoilT', 'kickT', 'lastAngle', 'lastPower', 'respawning', 'blocked'];
+const PACK = ['x', 'y', 'rx', 'ry', 'rtilt', 'dir', 'aim', 'moving', 'phase', 'air', 'dead', 'ko', 'power', 'charging', 'recoilT', 'kickT', 'lastAngle', 'lastPower', 'respawning', 'blocked', 'hp'];
 const pack = P => PACK.map(k => typeof P[k] === 'boolean' ? (P[k] ? 1 : 0) : (typeof P[k] === 'number' ? Math.round(P[k] * 100) / 100 : P[k]));
 function sendSnap() {
   Net.send({ t: 'snap', u: [pack(bot), pack(foe)], sh: shots.map(z => [Math.round(z.x), Math.round(z.y)]), w: wind, ts: turn.state, tt: Math.round(turn.t * 100) / 100, sc: [score.player, score.ai] });
@@ -458,7 +459,7 @@ function explodeFx(P) {
 }
 function respawn(P, other) {
   P.x = spawnPoint(other.x); P.y = 90; P.vy = 0; P.air = true; P.dead = false; P.tilt = 0; P.rtilt = 0;
-  P.rx = P.x; P.ry = P.y; P.ko = false; P.gone = false; P.respawning = true; if (P === bot) bot.dir = foe.x > bot.x ? 1 : -1; else foe.dir = bot.x > foe.x ? 1 : -1;
+  P.rx = P.x; P.ry = P.y; P.ko = false; P.gone = false; P.respawning = true; P.hp = P.hpShow = MAX_HP; if (P === bot) bot.dir = foe.x > bot.x ? 1 : -1; else foe.dir = bot.x > foe.x ? 1 : -1;
 }
 
 // ===================== turns + AI opponent (decision #84) =====================
@@ -468,7 +469,7 @@ function respawn(P, other) {
 // like a human bracketing and lands its first hit on shot N (N secretly 5-10 per game).
 const TURN_TIME = 20;   // seconds per turn (MECHANICS §3)
 const turn = { state: 'player', t: 0, hitBy: null, aiShots: 0, aiHitOn: 5 + Math.floor(Math.random() * 6), plan: null, winner: null };
-function resetMatch() { score.player = 0; score.ai = 0; bot.dead = false; foe.dead = false; Object.assign(turn, { state: 'player', t: 0, hitBy: null, aiShots: 0, aiHitOn: 5 + Math.floor(Math.random() * 6), plan: null, winner: null }); msg.textContent = ''; }
+function resetMatch() { score.player = 0; score.ai = 0; bot.dead = false; foe.dead = false; bot.hp = foe.hp = bot.hpShow = foe.hpShow = MAX_HP; Object.assign(turn, { state: 'player', t: 0, hitBy: null, aiShots: 0, aiHitOn: 5 + Math.floor(Math.random() * 6), plan: null, winner: null }); msg.textContent = ''; }
 function simLand(x, y, vx, vy) {   // same integration as stepShots, without side effects; returns the impact point (or null)
   const ax = Math.cos(wind.d * Math.PI / 180) * wind.s * WIND_K, ay = GRAV - Math.sin(wind.d * Math.PI / 180) * wind.s * WIND_K;
   for (let t = 0; t < 2400; t++) {
@@ -513,6 +514,11 @@ function stepTurn() {
   const settled = !shots.length && !(camFocus && simMs < camHoldUntil);
   const decide = () => {
     // #86: a hit explodes the target and it respawns from the sky; the match keeps going
+    const victim = turn.hitBy === 'player' ? foe : turn.hitBy === 'ai' ? bot : null;
+    if (victim && victim.hp > 0) {                       // hit but still standing (#90)
+      if (turn.hitBy === 'ai') { turn.aiShots = 0; turn.aiHitOn = 2 + Math.floor(Math.random() * 3); }   // the AI is dialled in: next hit sooner
+      turn.hitBy = null; return false;
+    }
     if (Net.mode === 'host' && turn.hitBy) {          // multiplayer: one kill ends the match (back to the room)
       const w = turn.hitBy; if (w === 'player') { score.player++; explodeBot(foe); } else { score.ai++; explodeBot(bot); }
       turn.hitBy = null; turn.state = 'over'; turn.winner = w; turn.overAt = simMs + 2600; return true;
@@ -616,7 +622,7 @@ function stepShots() {
     if (hit) {
       crater(Math.round(s.x), Math.round(s.y), FEEL.craterR.v); camFocus = [s.x, s.y]; camHoldUntil = simMs + 1100;
       if (tgt) { const d = Math.hypot(s.x - tgt.x, s.y - (tgt.y - 40));
-        if (d < FEEL.craterR.v + 30) { popup(d < 40 ? 'BULLSEYE!' : 'HIT!', tgt.x, tgt.y - 130); turn.hitBy = s.owner; } }
+        if (d < FEEL.craterR.v + 30) { popup(d < 40 ? 'BULLSEYE!' : 'HIT!', tgt.x, tgt.y - 130); tgt.hp = Math.max(0, (tgt.hp ?? MAX_HP) - 1); turn.hitBy = s.owner; } }
       lastShots[s.owner] = { trail: s.trail, end: [s.x, s.y] }; Net.event({ k: 'trail', side: s.owner, trail: s.trail.filter((_, i) => i % 2 === 0), end: [s.x, s.y] });
       shots.splice(i, 1);
     }
@@ -761,6 +767,18 @@ const flakes = Array.from({ length: 240 }, () => ({ x: Math.random(), y: Math.ra
 // the red needle shows the exact direction the shot leaves the bot.
 // Team colours (decision #62): you + allies = green, enemies = red (classic).
 const TEAM_COL = { ally: ['rgba(60,210,90,0.5)', 'rgba(10,90,30,0.6)', '#19c94a'], enemy: ['rgba(255,70,50,0.5)', 'rgba(120,10,10,0.55)', '#ff1f1f'] };
+// thin Gunbound-style health bar just below the bot's feet (#90): 3 segments, drains smoothly
+function drawHpBar(W2S, s, P) {
+  const hp = P.hp ?? MAX_HP; P.hpShow = (P.hpShow ?? hp) + (hp - (P.hpShow ?? hp)) * 0.08;
+  const [cx, cy] = W2S(P.rx, P.ry + FEEL.sink.v + 10), w = 64 * s, h = Math.max(4, 6 * s), x = cx - w / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(10,20,10,0.75)'; ctx.fillRect(x - 1.5, cy - 1.5, w + 3, h + 3);
+  ctx.fillStyle = '#c0392b'; ctx.fillRect(x, cy, w * P.hpShow / MAX_HP, h);                    // the draining part flashes red
+  const g = ctx.createLinearGradient(0, cy, 0, cy + h); g.addColorStop(0, '#8dff6a'); g.addColorStop(1, '#2fae2a');
+  ctx.fillStyle = g; ctx.fillRect(x, cy, w * hp / MAX_HP, h);
+  ctx.fillStyle = 'rgba(10,20,10,0.75)'; for (let i = 1; i < MAX_HP; i++) ctx.fillRect(x + w * i / MAX_HP - 0.75, cy, 1.5, h);
+  ctx.restore();
+}
 function drawAngleGauge(W2S, s, P = bot, team = 'ally') {
   // Classic layout (#61): a RING band around the bot's body, outside its outline (ahead of the cannon),
   // drawn BEHIND the bot so it never covers the bot's art. Centre = the body's middle, following the drawn tilt.
@@ -872,6 +890,7 @@ function draw() {
     ctx.save(); ctx.translate(fx, fy); ctx.rotate(foe.rtilt); ctx.scale(foe.dir * s * k, s * k);
     window.KekRig.draw(ctx, RIG, foe, { legSwing: FEEL.legSwing.v }, foeRider); ctx.restore();
   }
+  for (const P of [foe, bot]) if (!P.ko && !P.dead && !P.gone) drawHpBar(W2S, s, P);
   if (!bot.ko && !bot.dead) {
     drawAngleGauge(W2S, s, bot, me === bot ? 'ally' : 'enemy');   // behind the bot (#61)
     const [sx, sy] = W2S(bot.rx, bot.ry + FEEL.sink.v), k = FEEL.botScale.v;
@@ -1006,9 +1025,10 @@ if (q.get('selfplay') === '1') setTimeout(function wait() {
   if (!ready) return setTimeout(wait, 50);
   for (let i = 0; i < 150; i++) tick();
   const log = [];
-  for (let i = 0; i < 60 * 600 && score.ai === 0; i++) {
+  for (let i = 0; i < 60 * 2000 && score.ai === 0; i++) {
     if (turn.state === 'player') { bot.dir = -1; bot.aim = 45; bot.power = 100; fire(bot); }
-    const before = turn.aiShots; tick();
+    const before = turn.aiShots, hpB = bot.hp; tick();
+    if (bot.hp < hpB) log.push(`  -> HIT, player hp ${bot.hp}/${MAX_HP}`);
     if (turn.aiShots > before) log.push(`AI shot ${turn.aiShots}: wind ${wind.s}@${wind.d}, plan aim ${turn.plan.local} pow ${turn.plan.power}`);
   }
   const pre = document.createElement('pre'); pre.style.cssText = 'position:fixed;left:0;top:0;margin:0;padding:6px;background:#fff;color:#000;font:12px monospace;z-index:9';
