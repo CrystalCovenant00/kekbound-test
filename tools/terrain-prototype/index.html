@@ -709,7 +709,7 @@ Sfx.init();
 // ===================== camera, input =====================
 // Shot camera: follow the shot in flight, hold on the impact while it resolves, then pan back to the active bot.
 let camFocus = null, camHoldUntil = 0, nowMs = 0, simMs = 0;   // simMs = game time (advances per physics tick)
-const cam = { x: 0, y: 0 }; let follow = true, whole = false;
+const cam = { x: 0, y: 0 }; let follow = true, whole = false; let camTurnSeen = null;
 const keys = {};
 addEventListener('keydown', e => {
   if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
@@ -856,8 +856,9 @@ function draw() {
   const s = viewScale(), vw = CW / s, vh = CH / s;
   nowMs = performance.now();
   const active = turn.state === 'ai' ? foe : turn.state === 'player' ? bot : me;
+  if (turn.state !== camTurnSeen) { camTurnSeen = turn.state; if (turn.state === 'player' || turn.state === 'ai') setFollow(true); }   // new turn: pan to whoever plays once, then the camera is free (#91)
   const falling = [bot, foe].find(P => P.respawning && !P.dead);                  // a bot dropping back in from the sky
-  if ((follow || shots.length || active !== me || falling || (camFocus && simMs < camHoldUntil)) && !whole) {   // a shot in flight ALWAYS takes the camera (#80)
+  if ((follow || shots.length || falling || (camFocus && simMs < camHoldUntil)) && !whole) {   // a shot in flight ALWAYS takes the camera (#80)
     let tx = active.x, ty = active.y, ease = 0.08;
     if (shots.length) { [tx, ty] = lerpShot(shots[0]); ease = 0.12; }            // ride with the shot
     else if (falling && !(camFocus && simMs < camHoldUntil)) { tx = falling.x; ty = Math.max(falling.y, 300); ease = 0.14; }   // follow the respawn fall
