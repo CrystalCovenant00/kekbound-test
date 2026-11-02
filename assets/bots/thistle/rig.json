@@ -1,0 +1,130 @@
+{
+  "id": "thistle",
+  "name": "Thistle",
+  "units": "concept px (= part px x scale); origin = ground under body centre; +y down",
+  "artScale": 0.11639,
+  "partScale": 1.18,
+  "parts": {
+    "body": "body.png",
+    "launcher": "launcher.png",
+    "hub": "hub.png",
+    "leg_back": "leg_back.png",
+    "leg_front": "leg_front.png",
+    "rider_front": "rider_front.png",
+    "blink": "blink.png"
+  },
+  "partScaleOverrides": {},
+  "body": {
+    "pivot": [
+      423.0,
+      303.5
+    ],
+    "at": [
+      0.0,
+      -429.9
+    ]
+  },
+  "hub": {
+    "pivot": [
+      62.5,
+      63.5
+    ],
+    "at": [
+      163.0,
+      -622.9
+    ],
+    "scale": 1
+  },
+  "launcher": {
+    "pivot": [
+      7,
+      121
+    ],
+    "mount": [
+      163.0,
+      -622.9
+    ],
+    "aimBase": 16.95592558920218,
+    "axisDeg": 4.94,
+    "muzzle": [
+      289,
+      -25
+    ],
+    "visualMin": 0,
+    "visualMax": 50,
+    "aimMin": 10,
+    "aimMax": 80
+  },
+  "seed": {
+    "at": [
+      -341.0,
+      -660.6
+    ],
+    "r": 70
+  },
+  "legs": [
+    {
+      "img": "leg_back",
+      "pivot": [
+        118.0,
+        55.4
+      ],
+      "at": [
+        -249.1,
+        -231.9
+      ]
+    },
+    {
+      "img": "leg_front",
+      "pivot": [
+        114.5,
+        51.3
+      ],
+      "at": [
+        212.9,
+        -214.5
+      ]
+    }
+  ],
+  "farLegs": null,
+  "rider": {
+    "seat": [
+      -55.8,
+      -560.6
+    ],
+    "height": 582.2,
+    "front": {
+      "pivot": [
+        176.0,
+        75.0
+      ],
+      "at": [
+        -11.8,
+        -628.6
+      ]
+    },
+    "clipY": -613.6
+  },
+  "blink": {
+    "pivot": [
+      50.0,
+      45.0
+    ],
+    "at": [
+      347.9,
+      -328
+    ],
+    "every": 3.6,
+    "dur": 0.13
+  },
+  "drawOrder": [
+    "farLegs",
+    "legs",
+    "launcher",
+    "body",
+    "seedGlow",
+    "rider (waist-up)",
+    "riderFront",
+    "hub"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "_doc": "Equipment catalog (docs/AVATARS.md). gender: any | male | female (decision #45; most items are 'any'). img is relative to this folder. Every layer is on the shared 1254x1254 base canvas.",
+  "items": {
+    "head": {
+      "h1": { "label": "Short hair", "img": "head/h1-short-hair.png", "gender": "any", "source": "art-tests/equipment/h1-short-hair.png (edit of A1)" },
+      "h2": { "label": "Long hair",  "img": "head/h2-long-hair.png",  "gender": "any", "source": "art-tests/equipment/h2-long-hair.png (edit of A2)" }
+    },
+    "body": {
+      "o1": { "label": "Adventurer tunic", "img": "body/o1-adventurer-tunic.png", "gender": "any", "source": "art-tests/equipment/o1-adventurer-tunic.png (edit of A1)" }
+    }
+  }
+}
