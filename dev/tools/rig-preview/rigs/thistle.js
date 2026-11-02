@@ -54,7 +54,8 @@ window.RIG_DATA = {
     "visualMin": 0,
     "visualMax": 50,
     "aimMin": 10,
-    "aimMax": 80
+    "aimMax": 80,
+    "reach": 353.7
   },
   "seed": {
     "at": [

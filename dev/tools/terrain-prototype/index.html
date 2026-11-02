@@ -565,8 +565,9 @@ function newWind(first) {
 function gaugeGeom(P) {
   const RD = window.RIG_DATA, k = FEEL.botScale.v, A = RD.artScale * k, c = Math.cos(P.rtilt), sn = Math.sin(P.rtilt);
   const mx = RD.launcher.mount[0] * A * P.dir, my = RD.launcher.mount[1] * A;
-  const len = Math.hypot(RD.launcher.muzzle[0], RD.launcher.muzzle[1]) * (RD.partScale || 1) * A;   // pivot -> cannon tip (parts drawn at partScale, #99)
-  const rIn = len + 8, rOut = rIn + FEEL.gaugeW.v;                                    // +8: clear of the wide cannon mouth
+  // the ring starts beyond the cannon's furthest painted pixel (its 'reach', #99d) + a clear gap, at every angle
+  const len = (RD.launcher.reach || Math.hypot(RD.launcher.muzzle[0], RD.launcher.muzzle[1])) * (RD.partScale || 1) * A;
+  const rIn = len + 15, rOut = rIn + FEEL.gaugeW.v;   // 15 px of clear air between the cannon and the ring (user: "quite a way")
   return { cx: P.rx + mx * c - my * sn, cy: P.ry + FEEL.sink.v + mx * sn + my * c, rIn, rOut };
 }
 function muzzleWorld(P = me) {
