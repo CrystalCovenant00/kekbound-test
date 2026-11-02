@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kekbound Terrain Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --panel:#262c3d; --text:#e8ecf5; --muted:#9aa3b8; --accent:#7bd389; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#111; color:var(--text); font:14px/1.4 system-ui, sans-serif; display:flex; height:100vh; overflow:hidden; }
+  #stage { flex:1; position:relative; min-width:0; }
+  canvas { width:100%; height:100%; display:block; cursor:crosshair; }
+  #hud { position:absolute; left:12px; top:10px; padding:8px 12px; border-radius:8px; background:#0009; color:#fff; font-weight:600; pointer-events:none; white-space:pre; }
+  #msg { position:absolute; left:50%; top:40%; transform:translate(-50%,-50%); font:800 40px system-ui; color:#fff; text-shadow:0 3px 0 #0008; pointer-events:none; text-align:center; }
+  aside { width:290px; background:var(--panel); padding:14px; overflow-y:auto; }
+  h1 { font-size:16px; margin:0 0 4px; } h2 { font-size:13px; margin:14px 0 6px; color:var(--accent); text-transform:uppercase; letter-spacing:.05em; }
+  select, button { width:100%; background:#36405a; color:var(--text); border:1px solid #4a5677; border-radius:6px; padding:6px 8px; font:inherit; cursor:pointer; margin:3px 0; }
+  label { display:block; margin:7px 0 1px; color:var(--muted); font-size:12px; } label span { float:right; color:var(--text); }
+  input[type=range] { width:100%; }
+  label.check { display:flex; gap:8px; align-items:center; color:var(--text); font-size:13px; }
+  .hint { color:var(--muted); font-size:12px; margin-top:6px; } kbd { background:#36405a; border-radius:4px; padding:0 5px; color:var(--text); }
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(10,14,28,0.78); z-index:5; }
+  .hidden { display:none !important; }
+  .menu { display:flex; flex-direction:column; gap:10px; margin-top:22px; width:300px; }
+  .menu button, .joinRow button { font:700 20px Fredoka,system-ui; padding:12px; border-radius:14px; border:3px solid #6a3a00; background:linear-gradient(#ffe680,#ffc928); color:#5a2e00; cursor:pointer; margin:0; }
+  .menu button:hover { filter:brightness(1.08); }
+  .joinRow { display:flex; gap:8px; } .joinRow button { width:auto; flex:0 0 110px; } .joinRow input { flex:1; font:700 22px Fredoka,system-ui; text-transform:uppercase; text-align:center; border-radius:12px; border:3px solid #2b3a6a; background:#eef3ff; color:#1b2550; letter-spacing:3px; min-width:0; }
+  .note { color:#c7d3f0; font:500 14px system-ui; margin-top:8px; text-align:center; }
+  .roomTop { position:absolute; top:24px; display:flex; align-items:center; gap:12px; font:700 22px Fredoka,system-ui; color:#fff; }
+  .roomLabel { color:#9fb6dd; } #roomCode { color:#ffd34d; letter-spacing:4px; font-size:30px; }
+  .roomTop button, .leave { font:700 14px Fredoka,system-ui; padding:6px 12px; border-radius:10px; border:2px solid #7fb2ff; background:#2b3a6a; color:#fff; cursor:pointer; width:auto; margin:0; }
+  .leave { position:absolute; bottom:22px; }
+  .slots { display:flex; align-items:center; gap:28px; }
+  .slot { width:300px; height:230px; padding:12px; display:flex; flex-direction:column; align-items:center; color:#fff; font:700 18px Fredoka,system-ui; border:4px solid rgba(255,255,255,0.75); }
+  .slot.red { background:linear-gradient(135deg,#9b2e5e,#5e1638); clip-path:polygon(0 0,86% 0,100% 50%,86% 100%,0 100%); }
+  .slot.blue { background:linear-gradient(225deg,#3b6fd6,#1d3a8a); clip-path:polygon(14% 0,100% 0,100% 100%,14% 100%,0 50%); }
+  .slotTag { font:700 16px Fredoka,system-ui; color:#ffd34d; } .slot canvas { width:260px; height:170px; }
+  .mid { display:flex; flex-direction:column; align-items:center; width:200px; }
+  #startBtn { font:700 34px Fredoka,system-ui; padding:22px 26px; border-radius:18px; border:4px solid #6a3a00; background:linear-gradient(#fff3a0,#ffc928); color:#5a2e00; cursor:pointer; width:auto; box-shadow:0 6px 0 #6a3a00; }
+  #startBtn:disabled { filter:grayscale(0.8) brightness(0.8); cursor:default; }
+  #lastResult { margin-top:22px; font:700 24px Fredoka,system-ui; color:#ffd34d; min-height:30px; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas><div id="hud"></div><div id="msg"></div>
+  <div id="start" class="overlay">
+    <div style="font:700 72px Fredoka,system-ui;color:#ffd34d;-webkit-text-stroke:3px #6a3a00;text-shadow:0 5px 0 #6a3a00">KEKBOUND</div>
+    <div class="menu">
+      <button id="btnPractice">Practice vs AI</button>
+      <button id="btnHost">Host a room</button>
+      <div class="joinRow"><input id="joinCode" maxlength="5" placeholder="CODE"><button id="btnJoin">Join</button></div>
+      <div id="startMsg" class="note"></div>
+    </div>
+    <div class="note">Multiplayer test: the host shares the 5-letter room code; the friend types it and presses Join.</div>
+  </div>
+  <div id="room" class="overlay hidden">
+    <div class="roomTop"><span class="roomLabel">ROOM</span> <span id="roomCode">-----</span> <button id="copyCode">Copy code</button><button id="copyLink">Copy invite link</button><span id="roomMsg" class="note"></span></div>
+    <div class="slots">
+      <div class="slot red"><div class="slotName">HOST <span id="hostYou"></span></div><canvas id="slotA" width="260" height="170"></canvas><div class="slotTag">Master</div></div>
+      <div class="mid"><button id="startBtn" disabled>START</button><div id="midNote" class="note">Waiting for a player…</div></div>
+      <div class="slot blue"><div class="slotName" id="guestName">Empty slot</div><canvas id="slotB" width="260" height="170"></canvas><div class="slotTag" id="guestTag"></div></div>
+    </div>
+    <div id="lastResult"></div>
+    <button id="leaveBtn" class="leave">Leave room</button>
+  </div></div>
+<aside>
+  <h1>Terrain Prototype</h1>
+  <div class="hint">Destructible land, scrolling map, animated Thistle + rider. A test bed, not the final game.</div>
+  <h2>Map</h2>
+  <select id="mapSel"></select>
+  <button id="resetBtn">Reset map (R)</button>
+  <h2>Bot feel (tune these)</h2>
+  <div id="feel"></div>
+  <button id="copyBtn">Copy feel settings</button>
+  <h2>Rider</h2>
+  <select id="baseSel"></select>
+  <h2>Background</h2>
+  <label>Haze <span id="vHaze"></span></label><input id="haze" type="range" min="0" max="0.5" step="0.01">
+  <label>Softening (blur px) <span id="vBlur"></span></label><input id="blur" type="range" min="0" max="4" step="0.1">
+  <label class="check"><input type="checkbox" id="snowChk" checked> Weather (snow on Hollyhearth)</label>
+  <h2>Practice</h2>
+  <label>Wind</label>
+  <select id="windSel"><option value="classic">Classic (360°, strength 0-30)</option><option value="gentle">Gentle (max 12)</option><option value="off">Off</option></select>
+  <label class="check"><input type="checkbox" id="trailChk" checked> Show my last shot's path</label>
+  <h2>Music</h2>
+  <div class="hint" id="musicState">No music on this map</div>
+  <label>Volume <span id="vVol">50</span></label><input id="vol" type="range" min="0" max="100" step="1" value="50">
+  <label class="check"><input type="checkbox" id="muteChk"> Mute (M)</label>
+  <h2>View</h2>
+  <label class="check"><input type="checkbox" id="followChk" checked> Camera follows bot (F)</label>
+  <label class="check"><input type="checkbox" id="zoomChk"> Whole map (Z)</label>
+  <label class="check"><input type="checkbox" id="debugChk"> Show feet / climb debug</label>
+  <label>Cannon art</label>
+  <select id="cannonSel"><option value="true">Points exactly at the aim</option><option value="scaled">Scaled into its safe swing</option><option value="fixed">Fixed (doesn't swing)</option></select>
+  <h2>Controls</h2>
+  <div class="hint">
+    <kbd>←</kbd><kbd>→</kbd> drive &nbsp; <kbd>↑</kbd><kbd>↓</kbd> aim<br>
+    <kbd>Space</kbd> hold for power, release to fire<br>
+    <b>Right-drag</b>: pan<br>
+    <kbd>B</kbd> respawn &nbsp; <kbd>R</kbd> reset map
+  </div>
+</aside>
+<!-- Meadowreach removed from the prototype until it is redone (user, 2026-11-01); files kept in assets/maps/meadowreach -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="maps/hollyhearth.js"></script>
+<script src="../rig-preview/rigs/thistle.js"></script>
+<script src="../rig-preview/rigs/avatars.js"></script>
+<script src="../shared/rig-render.js"></script>
+<script>
+// ===================== constants (world px = 1080p logical px) =====================
+const VIEW_W = 1920, VIEW_H = 1080, TICK = 1000 / 60, GRAV = 0.32, CRATER_R = 58;
+// Bot feel: tunable, then locked into the bot standard (Copy feel settings)
+const FEEL = {
+  botScale:  { v: 0.72, min: 0.5,  max: 1.2, step: 0.01, label: 'Bot size (1.0 = 115 px tall)' },
+  speed:     { v: 0.9,  min: 0.3,  max: 2.0, step: 0.05, label: 'Drive speed (px/tick)' },
+  climb:     { v: 76,   min: 35,   max: 80,  step: 1,    label: 'Max climb angle (°)' },
+  look:      { v: 6,    min: 4,    max: 40,  step: 1,    label: 'Climb look-ahead (px)' },
+  stepUp:    { v: 30,   min: 0,    max: 80,  step: 1,    label: 'Step-up height (px): steep lips this tall are climbable' },
+  craterR:   { v: 46,   min: 20,   max: 90,  step: 1,    label: 'Crater radius (basic shot, px)' },
+  feet:      { v: 14,   min: 10,   max: 40,  step: 1,    label: 'Foot spacing (half, px)' },
+  sink:      { v: 4,    min: 0,    max: 12,  step: 0.5,  label: 'Sink feet into ground (px)' },
+  maxTilt:   { v: 75,   min: 10,   max: 70,  step: 1,    label: 'Max body tilt (°)' },
+  steps:     { v: 2.2,  min: 0.5,  max: 5,   step: 0.1,  label: 'Steps per second' },
+  smoothTilt:{ v: 0.12, min: 0.03, max: 1,  step: 0.01, label: 'Tilt smoothing (lower = smoother)' },
+  smoothY:   { v: 0.35, min: 0.05, max: 1,  step: 0.01, label: 'Height smoothing (lower = smoother)' },
+  deadZone:  { v: 1.2,  min: 0,    max: 5,  step: 0.1,  label: 'Tilt dead zone (deg)' },
+  vmax:      { v: 42,   min: 15,   max: 40, step: 0.5,  label: 'Max shot speed (100 power)' },
+  fillTime:  { v: 4.0,  min: 1,    max: 6,  step: 0.1,  label: 'Power bar fill time (s)' },
+  axisTrim:  { v: 0,    min: -4,   max: 4,  step: 0.1,  label: 'Barrel alignment (° up = +)' },
+  gaugeW:    { v: 12,   min: 5,    max: 30, step: 1,    label: 'Angle ring thickness (px)' },
+  legSwing:  { v: 22,   min: 0,    max: 45,  step: 1,    label: 'Leg swing (°)' },
+};
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const hud = document.getElementById('hud'), msg = document.getElementById('msg');
+let DPR = 1, CW = 0, CH = 0;
+function resize() { DPR = devicePixelRatio || 1; const r = cv.getBoundingClientRect(); CW = r.width; CH = r.height; cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR); }
+addEventListener('resize', resize); resize();
+
+// sliders
+const feelBox = document.getElementById('feel');
+for (const [k, s] of Object.entries(FEEL)) {
+  const lab = document.createElement('label'); lab.innerHTML = `${s.label} <span id="f_${k}">${s.v}</span>`;
+  const inp = Object.assign(document.createElement('input'), { type: 'range', min: s.min, max: s.max, step: s.step, value: s.v });
+  inp.oninput = () => { s.v = +inp.value; document.getElementById('f_' + k).textContent = s.v; if (k === 'axisTrim') window.KekRig.setAxisTrim(s.v); };
+  inp.onchange = () => inp.blur(); feelBox.append(lab, inp);
+}
+document.getElementById('copyBtn').onclick = e => {
+  navigator.clipboard?.writeText(JSON.stringify(Object.fromEntries(Object.entries(FEEL).map(([k, s]) => [k, s.v])), null, 1));
+  e.target.textContent = 'Copied ✓'; setTimeout(() => e.target.textContent = 'Copy feel settings', 1200); e.target.blur();
+};
+
+// animated rig (shared renderer) + rider
+const RIG = window.KekRig.load(window.RIG_DATA, window.AVATAR_DATA);
+const rider = { base: 'human_m', head: 'h1', body: 'o1' };
+const baseSel = document.getElementById('baseSel');
+baseSel.innerHTML = Object.entries(window.AVATAR_DATA.bases).map(([k, b]) => `<option value="${k}">${b.label}</option>`).join('');
+baseSel.onchange = () => { rider.base = baseSel.value; baseSel.blur(); };
+
+// ===================== map =====================
+let MAP, W, H, land, lctx, mask, bg = new Image(), bgCache = null, ready = false;
+function loadMap(id) {
+  ready = false;
+  const M = window.MAPS[id]; MAP = M.data; [W, H] = MAP.world;
+  if (typeof Music !== 'undefined') Music.load(MAP.music);
+  land = document.createElement('canvas'); land.width = W; land.height = H; lctx = land.getContext('2d');
+  mask = new Uint8Array(W * H);
+  document.getElementById('haze').value = MAP.background.haze ?? 0.1; document.getElementById('blur').value = MAP.background.blur ?? 0.5; syncLabels();
+  bg = new Image(); bg.onload = () => { bgCache = null; }; bg.src = MAP.background.src;
+  const imgs = {}; let pending = 0;
+  for (const [k, url] of Object.entries(M.images)) { pending++; const im = new Image(); im.onload = () => { if (--pending === 0) build(); }; im.src = url; imgs[k] = im; }
+  function build() {
+    lctx.clearRect(0, 0, W, H);
+    for (const L of MAP.lands) {
+      const im = imgs[L.img], w = im.width * L.scale, h = im.height * L.scale;
+      lctx.save(); lctx.translate(L.x + (L.flip ? w : 0), L.y); lctx.scale(L.flip ? -1 : 1, 1); lctx.drawImage(im, 0, 0, w, h); lctx.restore();
+    }
+    const a = lctx.getImageData(0, 0, W, H).data;
+    for (let i = 0; i < W * H; i++) mask[i] = a[i * 4 + 3] > 40 ? 1 : 0;
+    spawnBot(); spawnFoe(); ready = true;
+  }
+}
+const solid = (x, y) => { x |= 0; y |= 0; return x >= 0 && x < W && y >= 0 && y < H && mask[y * W + x] === 1; };
+// ground under one foot: the first solid pixel scanning down from (yRef - reach). -Infinity = buried in a wall. Infinity = nothing.
+function groundAt(x, yRef, reach) {
+  const top = Math.floor(yRef - reach);
+  if (solid(x, top)) return -Infinity;
+  for (let y = top; y < yRef + reach; y++) if (solid(x, y)) return y;
+  return Infinity;
+}
+
+// A foot rests on a small pad, not a single pixel: median of 5 samples across +-4 px (ignores 1-px spikes and notches)
+function footGround(x, yRef, reach) {
+  const v = [-4, -2, 0, 2, 4].map(d => groundAt(x + d, yRef, reach)).filter(g => g !== Infinity);
+  if (!v.length) return Infinity;
+  const f = v.filter(g => g !== -Infinity).sort((a, b) => a - b);
+  return f.length ? f[f.length >> 1] : -Infinity;
+}
+
+// ===================== bot: TWO-FOOT contact (decision #54) =====================
+// The body sits on the midpoint of two feet; each foot finds the ground under it, so the bot settles into dips and
+// tilts on slopes. Climbing is judged just ahead of the LEADING foot over a short look-ahead, so it climbs up to
+// FEEL.climb degrees and stops at near-vertical lips.
+const bot = { rx: null, ry: null, rtilt: 0, lastAngle: null, lastPower: null, x: 0, y: 0, vy: 0, dir: 1, aim: 35, power: 0, charging: false, tilt: 0, ko: false, air: true,
+              moving: 0, phase: 0, t: 0, recoilT: 1, kickT: 1, blocked: false, feetY: [0, 0] };
+const MAX_HP = 3;   // hits to KO (#90)
+function spawnBot() { const s = MAP.spawns[0]; Object.assign(bot, { hp: MAX_HP, hpShow: MAX_HP, x: s[0], y: s[1], vy: 0, ko: false, air: true, tilt: 0, rx: s[0], ry: s[1], rtilt: 0, dead: false, dir: 1 }); msg.textContent = ''; }
+function spawnFoe() { const s = MAP.spawns[1]; Object.assign(foe, { hp: MAX_HP, hpShow: MAX_HP, x: s[0], y: s[1], vy: 0, ko: false, gone: false, air: true, tilt: 0, rx: s[0], ry: s[1], rtilt: 0, dead: false, dir: -1, power: 0, charging: false }); }
+function stepUnit(P, keys, local) {
+  if (P.dead) return;
+  P.t += 1 / 60; P.recoilT += 1 / 60; P.kickT += 1 / 60;
+  if (P.ko) return;
+  const k = FEEL.botScale.v, fs = FEEL.feet.v * k, reach = 60 * k, maxClimb = FEEL.climb.v * Math.PI / 180;
+  let want = 0; if (keys.ArrowLeft) want = -1; if (keys.ArrowRight) want = 1;
+  if (want) P.dir = want;
+  P.blocked = false;
+  if (!P.air && want) {
+    // Climb rule (decision #54): look just past the LEADING foot.
+    //  - gentle enough (<= max climb angle over the look-ahead): go
+    //  - steeper, but the steep part is no taller than the step-up height (a crater lip, a curb): go
+    //  - steeper AND taller: blocked
+    const lead = P.x + want * fs, L = FEEL.look.v * k, up = FEEL.stepUp.v * k, reachUp = up + reach;
+    const g0 = groundAt(lead, P.y, reachUp), g1 = groundAt(lead + want * L, P.y, reachUp);
+    const base = (g0 === Infinity || g0 === -Infinity) ? P.y : g0;
+    let steep = g1 === -Infinity || (g1 !== Infinity && Math.atan2(base - g1, L) > maxClimb);
+    if (steep) {
+      // find the TOP OF THE STEEP PART: walk forward until the ground turns climbable again (not the hill beyond it)
+      let top = null, prev = base;
+      for (let d = 2; d <= L + up + fs; d += 2) {
+        const g = groundAt(lead + want * d, P.y, reachUp);
+        if (g === -Infinity) break;                                   // wall taller than we can see: blocked
+        if (g === Infinity) { top = prev; break; }                    // the lip drops away behind (thin ridge)
+        const gn = groundAt(lead + want * (d + 4), P.y, reachUp);
+        if (gn !== -Infinity && gn !== Infinity && Math.atan2(g - gn, 4) <= maxClimb) { top = g; break; }
+        prev = g;
+      }
+      if (top !== null && base - top <= up) steep = false;
+    }
+    P.blocked = steep;
+    if (!P.blocked) P.x += want * FEEL.speed.v;
+  }
+  P.moving += (((want && !P.blocked && !P.air) ? 1 : 0) - P.moving) * 0.15;
+  if (local && typeof Sfx !== 'undefined') Sfx.walk(!!want && !P.blocked && !P.air);
+  P.phase += P.moving * FEEL.steps.v * Math.PI / 60;
+  if (!P.air) {
+    let yl = footGround(P.x - fs, P.y, reach), yr = footGround(P.x + fs, P.y, reach);
+    if (yl === -Infinity) yl = P.y - reach; if (yr === -Infinity) yr = P.y - reach;
+    const yc = groundAt(P.x, P.y, reach);
+    if (yl === Infinity && yr === Infinity && yc === Infinity) { P.air = true; }
+    else {
+      // a foot over empty space hangs a little lower (the bot tips toward a ledge); fall if the centre has no support too
+      const hang = fs * Math.tan(25 * Math.PI / 180);
+      if (yl === Infinity) yl = (yr === Infinity ? yc : yr) + hang;
+      if (yr === Infinity) yr = (yl === Infinity ? yc : yl) + hang;
+      if (yc === Infinity && Math.abs(yl - yr) > 1.5 * hang) P.air = true;
+      else {
+        const target = (yl + yr) / 2;
+        if (target > P.y + 8 * k) P.air = true;                                // ground dropped away under it: fall
+        else P.y += (target - P.y) * 0.5;                                       // hug the ground smoothly
+        const mt = FEEL.maxTilt.v * Math.PI / 180;
+        P.tilt += (Math.max(-mt, Math.min(mt, Math.atan2(yr - yl, 2 * fs))) - P.tilt) * 0.25;
+        P.feetY = [yl, yr];
+      }
+    }
+  }
+  if (P.air) {
+    P.vy = Math.min(P.vy + GRAV, 18); const n = Math.ceil(Math.abs(P.vy)) || 1;
+    for (let i = 0; i < n; i++) {
+      const ny = P.y + P.vy / n, yc = groundAt(P.x, ny, reach);
+      if (yc !== Infinity && yc !== -Infinity && ny >= yc) { P.y = yc; P.vy = 0; P.air = false; if (P.respawning) { camFocus = [P.x, P.y - 40]; camHoldUntil = simMs + 1000; } P.respawning = false; break; }
+      P.y = ny;
+    }
+    P.tilt *= 0.95;
+    if (P.y > H + 150) { P.ko = true; }
+  }
+  smoothPose(P);
+}
+function stepBot(keys) { stepUnit(bot, keys, me === bot); }
+
+// Visual smoothing (decision #58): physics stays exact; the DRAWN pose eases toward it.
+function smoothPose(P) {
+  if (RAW) { P.rx = P.x; P.ry = P.y; P.rtilt = P.tilt; return; }
+  if (P.rx === null) { P.rx = P.x; P.ry = P.y; P.rtilt = P.tilt; return; }
+  P.rx = P.x;                                                       // horizontal follows exactly (input feels direct)
+  const dy = P.y - P.ry; P.ry += P.air ? dy : dy * FEEL.smoothY.v;   // falling is never smoothed
+  const dt = P.tilt - P.rtilt, dead = FEEL.deadZone.v * Math.PI / 180;
+  if (Math.abs(dt) > dead) P.rtilt += (dt - Math.sign(dt) * dead) * FEEL.smoothTilt.v;
+}
+
+// Enemy dummy (prototype only): a second Thistle at the second spawn, standing still, facing the player.
+const foe = { rx: null, ry: null, rtilt: 0, lastAngle: null, lastPower: null, x: 0, y: 0, vy: 0, dir: -1, aim: 30, power: 0, charging: false, tilt: 0, ko: false, air: true,
+              moving: 0, phase: 0, t: 0, recoilT: 1, kickT: 1, blocked: false, feetY: [0, 0], placed: true, gone: false, blinkSeed: 1.7 };
+const foeRider = { base: 'frog_f', head: 'h2', body: 'o1' };
+// ===================== multiplayer test (decision #87) =====================
+// PeerJS (WebRTC, free public broker). The HOST runs the whole simulation; the GUEST sends key states and renders the
+// host's snapshots (30/s) + events (craters, explosions, pop-ups, sounds). Host = side A (bot), guest = side B (foe).
+const NET_ID = 'kekbound-p2';   // bump when the network messages change, so old builds (e.g. the frozen demo, 'kekbound') can't join new rooms (#92)
+const Net = {
+  mode: 'single', peer: null, conn: null, code: null, inMatch: false, lastSnapAt: 0, guestHere: false,
+  ALPH: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
+  newCode() { let c = ''; for (let i = 0; i < 5; i++) c += this.ALPH[Math.floor(Math.random() * this.ALPH.length)]; return c; },
+  send(m) { if (this.conn && this.conn.open) this.conn.send(m); },
+  event(e) { if (this.mode === 'host' && this.inMatch) this.send({ t: 'ev', e }); },
+  host() {
+    this.mode = 'host'; this.code = (new URLSearchParams(location.search).get('code')) || this.newCode(); me = bot; setRiders();
+    showRoom(); updateRoom(); roomMsg('Opening room…');
+    this.peer = new Peer(NET_ID + '-room-' + this.code, { debug: 1 });
+    this.peer.on('open', () => roomMsg('Share this code with your friend'));
+    this.peer.on('error', e => roomMsg('Network error: ' + e.type));
+    this.peer.on('connection', c => {
+      if (this.conn && this.conn.open) { c.on('open', () => { c.send({ t: 'full' }); setTimeout(() => c.close(), 500); }); return; }
+      this.conn = c; this.wire(c);
+      c.on('open', () => { this.guestHere = true; updateRoom(); this.send({ t: 'room' }); });
+    });
+  },
+  join(code) {
+    code = (code || '').trim().toUpperCase(); if (code.length !== 5) { startMsg('Type the 5-letter room code'); return; }
+    this.mode = 'guest'; this.code = code; me = foe; setRiders(); startMsg('Connecting…');
+    this.peer = new Peer(NET_ID + '-guest-' + this.newCode() + this.newCode(), { debug: 1 });
+    this.peer.on('error', e => { startMsg(e.type === 'peer-unavailable' ? 'No room with that code' : 'Network error: ' + e.type); this.mode = 'single'; me = bot; });
+    this.peer.on('open', () => { const c = this.peer.connect(NET_ID + '-room-' + code, { reliable: true }); this.conn = c; this.wire(c);
+      c.on('open', () => { showRoom(); updateRoom(); }); });
+  },
+  wire(c) {
+    c.on('data', m => this.onMsg(m));
+    c.on('close', () => {
+      if (this.mode === 'host') { this.guestHere = false; this.conn = null; foeKeys = {}; this.inMatch = false; showRoom(); roomMsg('Your friend left the room'); updateRoom(); }
+      else if (this.mode === 'guest') { this.inMatch = false; document.getElementById('room').classList.add('hidden'); document.getElementById('start').classList.remove('hidden'); startMsg('The host closed the room'); this.mode = 'single'; me = bot; }
+    });
+  },
+  onMsg(m) {
+    if (this.mode === 'host') {
+      if (m.t === 'keys') foeKeys = m.k;
+    } else if (this.mode === 'guest') {
+      if (m.t === 'full') startMsg('That room is full');
+      else if (m.t === 'room') { this.inMatch = false; showRoom(m.result); updateRoom(); }
+      else if (m.t === 'start') beginMatch();
+      else if (m.t === 'snap') applySnap(m);
+      else if (m.t === 'ev') applyEvent(m.e);
+    }
+  },
+  startMatch() { if (this.mode !== 'host' || !this.guestHere) return; this.send({ t: 'start' }); beginMatch(); },
+  endMatch(winner) {
+    const result = winner === 'player' ? 'HOST WINS!' : 'GUEST WINS!';
+    this.inMatch = false; this.send({ t: 'room', result }); showRoom(result); updateRoom();
+  },
+  sendKeys() { if (this.mode === 'guest') this.send({ t: 'keys', k: { ArrowLeft: !!keys.ArrowLeft, ArrowRight: !!keys.ArrowRight, ArrowUp: !!keys.ArrowUp, ArrowDown: !!keys.ArrowDown, ' ': !!keys[' '] } }); },
+};
+const HOST_RIDER = { base: 'human_m', head: 'h1', body: 'o1' }, GUEST_RIDER = { base: 'human_f', head: 'h2', body: 'o1' };
+function setRiders() { if (Net.mode === 'single') return; Object.assign(rider, HOST_RIDER); Object.assign(foeRider, GUEST_RIDER); }
+let me = bot;   // the unit this screen controls/follows (set at boot: bot; the guest switches to foe)
+const mySide = () => me === foe ? 'ai' : 'player';
+function stepFoe() { stepUnit(foe, foeKeys, me === foe); foe.gone = foe.ko; }
+let foeKeys = {};   // set by the network (guest input) in multiplayer; empty for the AI
+
+// ----- room screen + match flow -----
+function startMsg(t) { document.getElementById('startMsg').textContent = t; }
+function roomMsg(t) { document.getElementById('roomMsg').textContent = t; }
+function showRoom(result) {
+  startGame(); document.getElementById('start').classList.add('hidden'); document.getElementById('room').classList.remove('hidden');
+  document.getElementById('roomCode').textContent = Net.code || '-----';
+  if (result !== undefined) document.getElementById('lastResult').textContent = result || '';
+}
+function updateRoom() {
+  const host = Net.mode === 'host', g = host ? Net.guestHere : true;
+  document.getElementById('hostYou').textContent = host ? '(you)' : '';
+  document.getElementById('guestName').textContent = g ? ('GUEST' + (host ? '' : ' (you)')) : 'Empty slot';
+  document.getElementById('guestTag').textContent = g ? 'Ready' : '';
+  const sb = document.getElementById('startBtn'); sb.disabled = !(host && g); sb.style.display = host ? '' : 'none';
+  document.getElementById('midNote').textContent = host ? (g ? 'Press START when ready' : 'Waiting for a player…') : 'Waiting for the host to start…';
+}
+function beginMatch() {
+  document.getElementById('room').classList.add('hidden'); startGame();
+  loadMap(MAP.id); resetMatch(); Object.assign(turn, { state: 'player', t: 0 }); lastShots = {}; shots = []; parts = [];
+  Net.inMatch = true; setFollow(true);
+}
+// slot previews: the two bots idling in the room
+const slotUnit = { t: 0, moving: 0, phase: 0, aim: 30, recoilT: 9, kickT: 9 };
+function drawSlot(id, riderObj, dir, show) {
+  const c = document.getElementById(id), x = c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height);
+  if (!show) return; x.translate(c.width / 2, c.height - 18); x.scale(dir * 1.25, 1.25);
+  window.KekRig.draw(x, RIG, slotUnit, { legSwing: 0 }, riderObj);
+}
+function drawRoom() {
+  if (document.getElementById('room').classList.contains('hidden')) return;
+  slotUnit.t += 1 / 60;
+  drawSlot('slotA', HOST_RIDER, 1, true);
+  drawSlot('slotB', GUEST_RIDER, -1, Net.mode === 'guest' || Net.guestHere);
+}
+document.getElementById('btnPractice').onclick = e => { e.stopPropagation(); Net.mode = 'single'; me = bot; startGame(); };
+document.getElementById('btnHost').onclick = e => { e.stopPropagation(); Net.host(); };
+document.getElementById('btnJoin').onclick = e => { e.stopPropagation(); startGame(); document.getElementById('start').classList.remove('hidden'); Net.join(document.getElementById('joinCode').value); };
+document.getElementById('joinCode').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') document.getElementById('btnJoin').click(); });
+document.getElementById('startBtn').onclick = () => Net.startMatch();
+function inviteLink() { return location.origin + location.pathname + '?join=' + (Net.code || ''); }
+function copyText(t, okMsg) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => roomMsg(okMsg), () => { prompt('Copy this:', t); }); }
+document.getElementById('copyLink').onclick = () => location.protocol === 'file:' ? roomMsg('Invite links only work on the online version - share the code instead') : copyText(inviteLink(), 'Invite link copied! Send it to your friend');
+document.getElementById('copyCode').onclick = () => copyText(Net.code || '', 'Code copied!');
+document.getElementById('leaveBtn').onclick = () => location.reload();
+
+// ----- host -> guest snapshots, guest rendering -----
+const PACK = ['x', 'y', 'rx', 'ry', 'rtilt', 'dir', 'aim', 'moving', 'phase', 'air', 'dead', 'ko', 'power', 'charging', 'recoilT', 'kickT', 'lastAngle', 'lastPower', 'respawning', 'blocked', 'hp'];
+const pack = P => PACK.map(k => typeof P[k] === 'boolean' ? (P[k] ? 1 : 0) : (typeof P[k] === 'number' ? Math.round(P[k] * 100) / 100 : P[k]));
+function sendSnap() {
+  Net.send({ t: 'snap', u: [pack(bot), pack(foe)], sh: shots.map(z => [Math.round(z.x), Math.round(z.y)]), w: wind, ts: turn.state, tt: Math.round(turn.t * 100) / 100, sc: [score.player, score.ai] });
+}
+function applySnap(m) {
+  [bot, foe].forEach((P, i) => { const v = m.u[i]; PACK.forEach((k, j) => {
+    const val = (k === 'air' || k === 'dead' || k === 'ko' || k === 'charging' || k === 'respawning' || k === 'blocked') ? !!v[j] : v[j];
+    if (k === 'rx' || k === 'ry' || k === 'rtilt') P['_' + k] = val; else P[k] = val; });
+    if (P.rx === null || Math.abs(P._rx - P.rx) > 400 || Math.abs(P._ry - P.ry) > 400) { P.rx = P._rx; P.ry = P._ry; P.rtilt = P._rtilt; } });
+  shots = m.sh.map((z, i) => ({ x: z[0], y: z[1], px: shots[i] ? shots[i].x : z[0], py: shots[i] ? shots[i].y : z[1] }));
+  wind = m.w; turn.state = m.ts; turn.t = m.tt; score.player = m.sc[0]; score.ai = m.sc[1]; Net.lastSnapAt = performance.now();
+}
+function applyEvent(e) {
+  if (e.k === 'crater') { crater(e.x, e.y, e.r, e.q); if (!e.q) { camFocus = [e.x, e.y]; camHoldUntil = simMs + 1100; } }
+  else if (e.k === 'explode') explodeFx(e.side === 'player' ? bot : foe);
+  else if (e.k === 'popup') popups.push({ x: e.x, y: e.y, t: 0, text: e.text });
+  else if (e.k === 'sfx') Sfx.play(e.n);
+  else if (e.k === 'trail') lastShots[e.side] = { trail: e.trail, end: e.end };
+}
+function guestTick() {
+  simMs += TICK;
+  for (const P of [bot, foe]) {
+    P.t = (P.t || 0) + 1 / 60;
+    if (P._rx !== undefined) { P.rx += (P._rx - P.rx) * 0.5; P.ry += (P._ry - P.ry) * 0.5; P.rtilt += (P._rtilt - P.rtilt) * 0.5; }
+  }
+  Sfx.walk(foe.moving > 0.5 && turn.state === 'ai');
+  stepParts();
+}
+function popup(text, x, y) { popups.push({ x, y, t: 0, text }); Net.event({ k: 'popup', text, x, y }); }
+
+// ===================== KO + respawn (decision #86) =====================
+// A hit makes the target EXPLODE (big burst, shockwave ring, flash, shake), vanish, then respawn falling from the sky
+// onto a random spot of land away from the other bot. Score: hits landed. (Temporary until HP/damage exists.)
+const score = { player: 0, ai: 0 }, rings = [], puffs = []; let shake = 0;
+function landTop(x) { x = Math.max(0, Math.min(W - 1, x | 0)); for (let y = 0; y < H; y++) if (mask[y * W + x]) return y; return null; }
+function spawnPoint(awayX) {
+  for (let tries = 0; tries < 200; tries++) {
+    const x = 120 + Math.random() * (W - 240), t = landTop(x), l = landTop(x - 25), r = landTop(x + 25);
+    if (t === null || l === null || r === null || Math.abs(l - r) > 30) continue;    // need a reasonably flat landing
+    if (awayX !== undefined && Math.abs(x - awayX) < 700) continue;
+    return x;
+  }
+  return MAP.spawns[0][0];
+}
+function explodeBot(P) {
+  explodeFx(P); Net.event({ k: 'explode', side: P === bot ? 'player' : 'ai' });
+  crater(Math.round(P.x), Math.round(P.y - 10), FEEL.craterR.v * 1.25, true);
+  P.dead = true; P.respawnAt = simMs + 1600; camFocus = [P.x, P.y - 40]; camHoldUntil = P.respawnAt;
+}
+function explodeFx(P) {
+  const cx = P.x, cy = P.y - 40;
+  for (let i = 0; i < 120; i++) { const a = Math.random() * Math.PI * 2, sp = 4 + Math.random() * 14;
+    parts.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 5, life: 50 + Math.random() * 50, t: 0, r: 6 + Math.random() * 12,
+                 c: ['#ffd34d', '#ff8a3b', '#ff4d6d', '#ffffff', '#7fe08a', '#f7a8c8'][i % 6] }); }
+  for (let i = 0; i < 9; i++) { const a = Math.random() * Math.PI * 2, d = 20 + Math.random() * 50;   // puffy cartoon smoke
+    puffs.push({ x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d * 0.7, r0: 30 + Math.random() * 25, t: 0, life: 0.9 + Math.random() * 0.5, vy: -0.6 - Math.random() }); }
+  rings.push({ x: cx, y: cy, t: 0 }); shake = 14;
+}
+function respawn(P, other) {
+  P.x = spawnPoint(other.x); P.y = 90; P.vy = 0; P.air = true; P.dead = false; P.tilt = 0; P.rtilt = 0;
+  P.rx = P.x; P.ry = P.y; P.ko = false; P.gone = false; P.respawning = true; P.hp = P.hpShow = MAX_HP; if (P === bot) bot.dir = foe.x > bot.x ? 1 : -1; else foe.dir = bot.x > foe.x ? 1 : -1;
+}
+
+// ===================== turns + AI opponent (decision #84) =====================
+// Flow: player -> (shot resolves) -> ai: pan, think, swing the cannon, fire -> (shot resolves) -> player ...
+// First hit wins (no HP yet); falling into the clouds loses. The AI uses the SAME physics/wind/terrain: it simulates
+// its own shots to find a real solution, then aims at a point offset from you that shrinks every shot, so it closes in
+// like a human bracketing and lands its first hit on shot N (N secretly 5-10 per game).
+const TURN_TIME = 20;   // seconds per turn (MECHANICS §3)
+const turn = { state: 'player', t: 0, hitBy: null, aiShots: 0, aiHitOn: 5 + Math.floor(Math.random() * 6), plan: null, winner: null };
+function resetMatch() { score.player = 0; score.ai = 0; bot.dead = false; foe.dead = false; bot.hp = foe.hp = bot.hpShow = foe.hpShow = MAX_HP; Object.assign(turn, { state: 'player', t: 0, hitBy: null, aiShots: 0, aiHitOn: 5 + Math.floor(Math.random() * 6), plan: null, winner: null }); msg.textContent = ''; }
+function simLand(x, y, vx, vy) {   // same integration as stepShots, without side effects; returns the impact point (or null)
+  const ax = Math.cos(wind.d * Math.PI / 180) * wind.s * WIND_K, ay = GRAV - Math.sin(wind.d * Math.PI / 180) * wind.s * WIND_K;
+  for (let t = 0; t < 2400; t++) {
+    vx += ax; vy += ay; const n = Math.ceil(Math.hypot(vx, vy));
+    for (let j = 0; j < n; j++) { x += vx / n; y += vy / n; if (solid(x, y)) return [x, y]; }
+    if (Math.hypot(x - bot.x, y - (bot.y - 40)) < 38) return [x, y];
+    if (y > H + 200 || x < -400 || x > W + 400) return null;
+  }
+  return null;
+}
+function aiShotStart(local) {       // muzzle + world angle for the foe at a given local aim
+  const g = gaugeGeom(foe), wa = local - foe.dir * foe.rtilt * 180 / Math.PI, a = wa * Math.PI / 180, r = (g.rIn + g.rOut) / 2;
+  return { x: g.cx + Math.cos(a) * r * foe.dir, y: g.cy - Math.sin(a) * r, a };
+}
+function aiPlan() {
+  foe.dir = bot.x < foe.x ? -1 : 1;
+  const n = turn.aiShots + 1, left = Math.max(0, turn.aiHitOn - n);
+  // miss distance shrinks toward 0 at shot aiHitOn: big early misses, then closer and closer (alternating short/long)
+  const miss = left === 0 ? (Math.random() * 16 - 8) : (90 + left * 70 + Math.random() * 60) * (n % 2 ? 1 : -1);
+  const tx = bot.x + miss * -foe.dir;   // positive miss = short of the player (toward the AI)
+  let best = null;
+  for (const local of [55, 45, 65, 35, 70]) {
+    const st = aiShotStart(local);
+    for (let p = 2; p <= 100; p += 1) {
+      const v = FEEL.vmax.v * Math.sqrt(p / 100), hit = simLand(st.x, st.y, Math.cos(st.a) * v * foe.dir, -Math.sin(st.a) * v);
+      if (!hit) continue; const err = Math.abs(hit[0] - tx) + Math.max(0, Math.abs(hit[1] - bot.y) - 150) * 0.5;
+      if (!best || err < best.err) best = { err, local, power: p };
+    }
+    if (best && best.err < 20) break;
+  }
+  return best || { local: 50, power: 60, err: 999 };
+}
+function aiFire() {
+  const st = aiShotStart(foe.aim), v = FEEL.vmax.v * Math.sqrt(turn.plan.power / 100);
+  shots.push({ x: st.x, y: st.y, vx: Math.cos(st.a) * v * foe.dir, vy: -Math.sin(st.a) * v, owner: 'ai', trail: [[st.x, st.y]] });
+  foe.recoilT = 0; foe.kickT = 0; turn.aiShots++; Sfx.play('fire', 0.8);
+}
+function stepTurn() {
+  turn.t += 1 / 60;
+  if (turn.state === 'over') { if (Net.mode === 'host' && simMs > turn.overAt) Net.endMatch(turn.winner); return; }
+  if (Net.mode === 'host' && (bot.ko || foe.ko)) { turn.state = 'over'; turn.winner = bot.ko ? 'ai' : 'player'; turn.overAt = simMs + 1500; return; }   // fell into the clouds
+  const settled = !shots.length && !(camFocus && simMs < camHoldUntil);
+  const decide = () => {
+    // #86: a hit explodes the target and it respawns from the sky; the match keeps going
+    const victim = turn.hitBy === 'player' ? foe : turn.hitBy === 'ai' ? bot : null;
+    if (victim && victim.hp > 0) {                       // hit but still standing (#90)
+      if (turn.hitBy === 'ai') { turn.aiShots = 0; turn.aiHitOn = 2 + Math.floor(Math.random() * 3); }   // the AI is dialled in: next hit sooner
+      turn.hitBy = null; return false;
+    }
+    if (Net.mode === 'host' && turn.hitBy) {          // multiplayer: one kill ends the match (back to the room)
+      const w = turn.hitBy; if (w === 'player') { score.player++; explodeBot(foe); } else { score.ai++; explodeBot(bot); }
+      turn.hitBy = null; turn.state = 'over'; turn.winner = w; turn.overAt = simMs + 2600; return true;
+    }
+    if (turn.hitBy === 'player' && !foe.dead) { score.player++; explodeBot(foe); }
+    if (turn.hitBy === 'ai' && !bot.dead) { score.ai++; explodeBot(bot); turn.aiShots = 0; turn.aiHitOn = 5 + Math.floor(Math.random() * 6); }
+    turn.hitBy = null;
+    return false;
+  };
+  if (turn.state === 'playerShot' && settled) { if (!decide()) { newWind(); turn.state = 'ai'; turn.t = 0; turn.plan = null; } }
+  else if (turn.state === 'ai' && Net.mode === 'host') {          // a human plays side B: only the timer is enforced
+    if (turn.t >= TURN_TIME) { foe.charging = false; foe.power = 0; newWind(); turn.state = 'player'; turn.t = 0; popup('TIME!', foe.x, foe.y - 130); }
+  }
+  else if (turn.state === 'ai' && !bot.dead && !foe.dead && !bot.air && !foe.air) {
+    if (turn.t > 0.9 && !turn.plan) turn.plan = aiPlan();                                   // "thinking"
+    if (turn.plan) { const d = turn.plan.local - foe.aim; foe.aim += Math.sign(d) * Math.min(Math.abs(d), 0.6); }   // swing the cannon
+    if (turn.plan && Math.abs(turn.plan.local - foe.aim) < 0.01 && turn.t > 1.8) { aiFire(); turn.state = 'aiShot'; }
+  }
+  else if (turn.state === 'player' && !bot.dead && turn.t >= TURN_TIME) { bot.charging = false; bot.power = 0; newWind(); turn.state = 'ai'; turn.t = 0; turn.plan = null; popup('TIME!', bot.x, bot.y - 130); }
+  else if (turn.state === 'aiShot' && settled) { if (!decide()) { newWind(); turn.state = 'player'; turn.t = 0; } }
+  if (bot.ko && !bot.dead) { bot.dead = true; bot.respawnAt = simMs + 1200; }       // fell into the clouds
+  if (foe.gone && !foe.dead) { foe.dead = true; foe.respawnAt = simMs + 1200; }
+  if (bot.dead && simMs > bot.respawnAt) respawn(bot, foe);
+  if (foe.dead && simMs > foe.respawnAt) respawn(foe, bot);
+}
+
+// ===================== shots, craters, particles =====================
+let wind = { s: 0, d: 0 }, shots = [], parts = [], popups = [], lastShots = {};
+// Wind (#83): 360-degree compass. wind.s = strength 0-30, wind.d = direction it BLOWS TOWARD (degrees, 0 = right/east, 90 = up/north).
+// Push per tick = WIND_K * s, in that direction. At 30 from the south-west a full-power shot still just crosses a 3840 px map.
+const WIND_K = 0.003;
+let windMode = 'classic';
+function newWind(first) {
+  const max = windMode === 'gentle' ? 12 : (MAP.wind ? MAP.wind[1] : 30);
+  if (windMode === 'off') { wind = { s: 0, d: 0 }; return; }
+  if (first || Math.random() < 0.3) wind = { s: Math.round(Math.random() * max), d: Math.round(Math.random() * 360) };      // re-roll
+  else wind = { s: Math.max(0, Math.min(max, wind.s + Math.round((Math.random() * 2 - 1) * 3))),                              // drift
+                d: Math.round(((wind.d + (Math.random() * 2 - 1) * 20) % 360 + 360) % 360) };
+}
+
+// Gauge geometry (decision #63): the ring is centred on the CANNON PIVOT and sits just beyond the cannon tip,
+// so the needle is always a straight line out of the cannon, and the shot launches from the needle on the band.
+function gaugeGeom(P) {
+  const RD = window.RIG_DATA, k = FEEL.botScale.v, A = RD.artScale * k, c = Math.cos(P.rtilt), sn = Math.sin(P.rtilt);
+  const mx = RD.launcher.mount[0] * A * P.dir, my = RD.launcher.mount[1] * A;
+  const len = Math.hypot(RD.launcher.muzzle[0], RD.launcher.muzzle[1]) * A;          // pivot -> cannon tip
+  const rIn = len + 4, rOut = rIn + FEEL.gaugeW.v;
+  return { cx: P.rx + mx * c - my * sn, cy: P.ry + FEEL.sink.v + mx * sn + my * c, rIn, rOut };
+}
+function muzzleWorld(P = me) {
+  // the bullet starts ON the needle, in the middle of the band, flying along the true angle
+  const g = gaugeGeom(P), a = worldAngle(undefined, P) * Math.PI / 180, r = (g.rIn + g.rOut) / 2;
+  return [g.cx + Math.cos(a) * r * P.dir, g.cy - Math.sin(a) * r];
+}
+function muzzleWorldOld() {
+  const k = FEEL.botScale.v, [mx, my] = window.KekRig.muzzle(RIG, bot.aim), c = Math.cos(bot.rtilt), s = Math.sin(bot.rtilt);
+  const x = mx * bot.dir * k, y = my * k;
+  return [bot.rx + x * c - y * s, bot.ry + FEEL.sink.v + x * s + y * c];
+}
+// Gunbound rule (#56): aim is RELATIVE TO THE BOT; the world angle adds the terrain tilt.
+// Climbing a slope toward your target raises your real shot angle; tilting away lowers it.
+const AIM_MIN = () => window.RIG_DATA.launcher.aimMin ?? 10, AIM_MAX = () => window.RIG_DATA.launcher.aimMax ?? 80;
+const worldAngle = (local, P = me) => (local === undefined ? P.aim : local) - P.dir * P.rtilt * 180 / Math.PI;   // the drawn tilt: what you see is what you shoot
+function fire(P = bot) {
+  // P = the firing unit (bot = side A 'player', foe = side B 'ai'); only on that side's turn
+  const side = P === bot ? 'player' : 'ai';
+  if (P.ko || P.dead || turn.state !== side) return;
+  if (P === me) setFollow(true);                    // firing re-locks the camera: shot -> impact -> back to the bot (#80)
+  // speed = Vmax * sqrt(power/100): on flat ground the distance (v^2/g) is proportional to power, so +1 power always adds
+  // the same distance, short or long, and 1 power drops the shot at your feet. No minimum speed.
+  const wa = worldAngle(undefined, P), ang = wa * Math.PI / 180, v = FEEL.vmax.v * Math.sqrt(P.power / 100), [x, y] = muzzleWorld(P);
+  P.lastAngle = Math.round(wa); P.lastPower = P.power;
+  shots.push({ x, y, vx: Math.cos(ang) * v * P.dir, vy: -Math.sin(ang) * v, trail: [[x, y]], owner: side });
+  P.power = 0; P.recoilT = 0; P.kickT = 0; P.charging = false;
+  turn.state = side + 'Shot'; Sfx.play('fire'); Net.event({ k: 'sfx', n: 'fire' });
+}
+function crater(cx, cy, r, quiet) {
+  if (!quiet) Sfx.play('impact');
+  Net.event({ k: 'crater', x: cx, y: cy, r, q: !!quiet });
+  for (let y = Math.max(0, cy - r | 0); y <= Math.min(H - 1, cy + r); y++) {
+    const dx = Math.sqrt(Math.max(0, r * r - (y - cy) * (y - cy)));
+    for (let x = Math.max(0, cx - dx | 0); x <= Math.min(W - 1, cx + dx); x++) mask[y * W + x] = 0;
+  }
+  lctx.save(); lctx.globalCompositeOperation = 'destination-out'; lctx.beginPath(); lctx.arc(cx, cy, r, 0, Math.PI * 2); lctx.fill();
+  lctx.globalCompositeOperation = 'source-atop';
+  lctx.lineWidth = 16; lctx.strokeStyle = 'rgba(70,40,20,0.35)'; lctx.beginPath(); lctx.arc(cx, cy, r + 7, 0, Math.PI * 2); lctx.stroke();
+  lctx.lineWidth = MAP.outline.width + 1; lctx.strokeStyle = MAP.outline.color; lctx.beginPath(); lctx.arc(cx, cy, r + 2, 0, Math.PI * 2); lctx.stroke();
+  lctx.restore();
+  for (let i = 0; i < 26; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 7;
+    parts.push({ x: cx, y: cy, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 3, life: 40 + Math.random() * 30, t: 0, r: 3 + Math.random() * 6, c: ['#8a5a30', '#c9a26a', '#ffd36b', '#ffffff'][i % 4] }); }
+}
+function stepShots() {
+  for (let i = shots.length - 1; i >= 0; i--) {
+    const s = shots[i]; s.px = s.x; s.py = s.y; s.vx += Math.cos(wind.d * Math.PI / 180) * wind.s * WIND_K; s.vy += GRAV - Math.sin(wind.d * Math.PI / 180) * wind.s * WIND_K;
+    if (s.trail) s.trail.push([s.x, s.y]);
+    const n = Math.ceil(Math.hypot(s.vx, s.vy)); let hit = false;
+    for (let j = 0; j < n; j++) { s.x += s.vx / n; s.y += s.vy / n; if (solid(s.x, s.y)) { hit = true; break; } }
+    // the target is whoever did NOT fire it (#84)
+    const tgt = s.owner === 'ai' ? (bot.ko || bot.dead ? null : bot) : ((foe.gone || foe.dead || !foe.placed) ? null : foe);
+    if (!hit && tgt && Math.hypot(s.x - tgt.x, s.y - (tgt.y - 40)) < 38) hit = true;   // direct hit on the target's body
+    if (hit) {
+      crater(Math.round(s.x), Math.round(s.y), FEEL.craterR.v); camFocus = [s.x, s.y]; camHoldUntil = simMs + 1100;
+      if (tgt) { const d = Math.hypot(s.x - tgt.x, s.y - (tgt.y - 40));
+        if (d < FEEL.craterR.v + 30) { popup(d < 40 ? 'BULLSEYE!' : 'HIT!', tgt.x, tgt.y - 130); tgt.hp = Math.max(0, (tgt.hp ?? MAX_HP) - 1); turn.hitBy = s.owner; } }
+      lastShots[s.owner] = { trail: s.trail, end: [s.x, s.y] }; Net.event({ k: 'trail', side: s.owner, trail: s.trail.filter((_, i) => i % 2 === 0), end: [s.x, s.y] });
+      shots.splice(i, 1);
+    }
+    else if (s.y > H + 200 || s.x < -400 || s.x > W + 400) { lastShots[s.owner] = { trail: s.trail, end: null }; Net.event({ k: 'trail', side: s.owner, trail: s.trail.filter((_, i) => i % 2 === 0), end: null }); shots.splice(i, 1); }
+  }
+  stepParts();
+}
+function stepParts() { for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.vy += 0.25; p.x += p.vx; p.y += p.vy; if (++p.t > p.life) parts.splice(i, 1); } }
+
+// ===================== music (decision #75) =====================
+// Two <audio> elements alternate: near loopEnd the next one starts at 0 and they crossfade, so a track that fades out
+// at its end still loops seamlessly. Browsers only allow sound after a click or key press, so it starts on the first one.
+const Music = {
+  a: [new Audio(), new Audio()], cur: 0, cfg: null, started: false, vol: 0.5, muted: false, fading: false,
+  load(cfg) {
+    this.stop(); this.cfg = cfg || null; this.fading = false;
+    const st = document.getElementById('musicState');
+    if (!cfg) { st.textContent = 'No music on this map'; return; }
+    for (const el of this.a) { el.src = cfg.src; el.preload = 'auto'; }
+    this.vol = cfg.volume ?? 0.5; document.getElementById('vol').value = Math.round(this.vol * 100); document.getElementById('vVol').textContent = Math.round(this.vol * 100);
+    st.textContent = this.started ? 'Playing: ' + cfg.src.split('/').pop() : 'Click or press a key to start the music';
+    if (this.started) this.play();
+  },
+  play() {
+    if (!this.cfg) return; const el = this.a[this.cur];
+    el.currentTime = 0; el.volume = this.muted ? 0 : this.vol;
+    el.play().then(() => { document.getElementById('musicState').textContent = 'Playing: ' + this.cfg.src.split('/').pop(); }).catch(() => {});
+  },
+  stop() { for (const el of this.a) { el.pause(); } },
+  unlock() { if (this.started) return; this.started = true; this.play(); },
+  tick() {   // called every frame
+    if (!this.cfg || !this.started) return;
+    const el = this.a[this.cur], other = this.a[1 - this.cur], end = this.cfg.loopEnd ?? (el.duration || 1e9), xf = this.cfg.xfade ?? 2;
+    const target = this.muted ? 0 : this.vol;
+    if (!this.fading && el.currentTime >= end) {
+      this.fading = true; other.currentTime = 0; other.volume = 0; other.play().catch(() => {}); this.fadeStart = performance.now();
+    }
+    if (this.fading) {
+      const k = Math.min(1, (performance.now() - this.fadeStart) / (xf * 1000));
+      el.volume = target * (1 - k); other.volume = target * k;
+      if (k >= 1) { el.pause(); this.cur = 1 - this.cur; this.fading = false; }
+    } else el.volume = target;
+  },
+};
+let gameStarted = false;
+function startGame() { gameStarted = true; const st = document.getElementById('start'); if (st && Net.mode === 'single') st.classList.add('hidden'); Music.unlock(); Sfx.unlock(); Sfx.walk(false); }   // pre-start the silent walk loop
+
+addEventListener('pointerdown', () => Music.unlock());
+// try to start straight away: works when the browser already allows sound for this page (e.g. the click that opened it)
+
+
+document.getElementById('vol').oninput = e => { Music.vol = e.target.value / 100; document.getElementById('vVol').textContent = e.target.value; };
+document.getElementById('vol').onchange = e => e.target.blur();
+document.getElementById('muteChk').onchange = e => { Music.muted = e.target.checked; e.target.blur(); };
+
+// ===================== sound effects (#85) =====================
+// Each name maps to assets/audio/sfx/<name>.mp3 (ElevenLabs). Missing files just don't play. Pitch is varied slightly
+// per play so repeated sounds don't feel robotic. 'move' is a loop that fades with the walk.
+const Sfx = {
+  base: '../../assets/audio/sfx/', vol: 0.7, buf: {}, ok: {}, unlocked: false, loop: null,
+  names: ['move', 'fire', 'impact'],   // one impact sound for every landing (user)
+  ext: { move: 'ogg' },                 // the loop is Ogg: MP3 adds a tiny gap at each repeat
+  init() { for (const n of this.names) { const a = new Audio(this.base + n + '.' + (this.ext[n] || 'mp3')); a.preload = 'auto';
+    a.addEventListener('canplaythrough', () => { this.ok[n] = true; }, { once: true }); this.buf[n] = a; } },
+  unlock() { this.unlocked = true; },
+  play(n, vol = 1) {
+    if (!this.unlocked || !this.ok[n] || Music.muted) return;
+    const a = this.buf[n].cloneNode(); a.volume = Math.min(1, this.vol * vol); a.playbackRate = 0.94 + Math.random() * 0.12;
+    a.preservesPitch = false; a.play().catch(() => {});
+  },
+  walking: false,
+  walk(on) {   // footsteps: the loop runs silently from the start; on the first key-down it jumps to a step at full volume
+    if (!this.unlocked || !this.ok.move) return;
+    if (!this.loop) { this.loop = this.buf.move.cloneNode(); this.loop.loop = true; this.loop.volume = 0; this.loop.play().catch(() => {}); }
+    const full = Music.muted ? 0 : Math.min(1, this.vol * 0.55);
+    if (on && !this.walking) { try { this.loop.currentTime = 0.02; } catch (e) {} this.loop.volume = full; }   // instant start on a footstep
+    else if (on) this.loop.volume = full;
+    else this.loop.volume = Math.max(0, this.loop.volume - 0.08);                                             // quick smooth fade out
+    this.walking = on;
+  },
+};
+Sfx.init();
+
+// ===================== camera, input =====================
+// Shot camera: follow the shot in flight, hold on the impact while it resolves, then pan back to the active bot.
+let camFocus = null, camHoldUntil = 0, nowMs = 0, simMs = 0;   // simMs = game time (advances per physics tick)
+const cam = { x: 0, y: 0 }; let follow = true, whole = false; let camTurnSeen = null;
+const keys = {};
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+  keys[e.key] = true;
+  if (Net.mode === 'guest') Net.sendKeys();
+  if (Net.mode !== 'guest' && e.key === ' ' && !bot.charging && turn.state === 'player') { bot.charging = true; bot.power = 0; }
+  if (e.key === 'b' || e.key === 'B') spawnBot();
+  if (Net.mode === 'single' && (e.key === 'r' || e.key === 'R')) { loadMap(MAP.id); resetMatch(); }
+  if (e.key === 'f' || e.key === 'F') setFollow(!follow);
+  if (e.key === 'z' || e.key === 'Z') setWhole(!whole);
+  if (e.key === 'm' || e.key === 'M') { Music.muted = !Music.muted; document.getElementById('muteChk').checked = Music.muted; }
+  if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+});
+addEventListener('keyup', e => { keys[e.key] = false; if (Net.mode === 'guest') Net.sendKeys(); if (Net.mode !== 'guest' && e.key === ' ' && bot.charging) { bot.charging = false; fire(bot); } });
+// Fixed view (#81): the visible world area is ALWAYS 1920x1080 (or the whole map in Z mode) whatever the window size;
+// the picture scales to fit and the leftover space is letterboxed, so a bigger window never shows more of the map.
+function viewScale() { return whole ? Math.min(CW / W, CH / H) : Math.min(CW / VIEW_W, CH / VIEW_H); }
+function viewRect() { const s = viewScale(), vw = (whole ? W : VIEW_W) * s, vh = (whole ? H : VIEW_H) * s; return { s, ox: (CW - vw) / 2, oy: (CH - vh) / 2, vw, vh }; }
+function screenToWorld(px, py) { const v = viewRect(); return [cam.x + (px - v.ox) / v.s, cam.y + (py - v.oy) / v.s]; }
+let drag = null;
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('mousedown', e => {
+  if (e.button === 2) { drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; setFollow(false); return; }
+  // left click no longer blasts a crater (user, 2026-11-01)
+});
+addEventListener('mousemove', e => { if (drag) { const s = viewScale(); cam.x = drag.cx - (e.clientX - drag.x) / s; cam.y = drag.cy - (e.clientY - drag.y) / s; } });
+addEventListener('mouseup', () => { drag = null; });
+function setFollow(v) { follow = v; document.getElementById('followChk').checked = v; }
+function setWhole(v) { whole = v; document.getElementById('zoomChk').checked = v; }
+document.getElementById('followChk').onchange = e => { follow = e.target.checked; e.target.blur(); };
+document.getElementById('zoomChk').onchange = e => { whole = e.target.checked; e.target.blur(); };
+document.getElementById('cannonSel').onchange = e => { window.KekRig.setCannonMode(e.target.value); e.target.blur(); };
+window.KekRig.setCannonMode('true');
+document.getElementById('windSel').onchange = e => { windMode = e.target.value; newWind(true); e.target.blur(); };
+document.getElementById('trailChk').onchange = e => e.target.blur();
+document.getElementById('resetBtn').onclick = e => { loadMap(MAP.id); resetMatch(); e.target.blur(); };
+
+function syncLabels() { document.getElementById('vHaze').textContent = (+document.getElementById('haze').value).toFixed(2); document.getElementById('vBlur').textContent = (+document.getElementById('blur').value).toFixed(1); }
+for (const id of ['haze', 'blur']) document.getElementById(id).oninput = () => { syncLabels(); bgCache = null; };
+function bgCanvas() {
+  if (bgCache || !bg.complete || !bg.naturalWidth) return bgCache;
+  const p = MAP.background.parallax, needW = VIEW_W + (W - VIEW_W) * p, needH = VIEW_H + (H - VIEW_H) * p;
+  const s = Math.max(needW / bg.naturalWidth, needH / bg.naturalHeight);
+  const c = document.createElement('canvas'); c.width = Math.ceil(bg.naturalWidth * s); c.height = Math.ceil(bg.naturalHeight * s);
+  const x = c.getContext('2d'); x.filter = `blur(${document.getElementById('blur').value * s}px)`;
+  x.drawImage(bg, 0, 0, c.width, c.height); x.filter = 'none';
+  const hc = MAP.background.hazeColor || [220, 230, 245];
+  x.fillStyle = `rgba(${hc[0]},${hc[1]},${hc[2]},${document.getElementById('haze').value})`; x.fillRect(0, 0, c.width, c.height);
+  return (bgCache = c);
+}
+const flakes = Array.from({ length: 240 }, () => ({ x: Math.random(), y: Math.random(), z: 0.4 + Math.random() * 0.8, w: Math.random() * 6.28 }));
+
+// ===================== Gunbound-style angle gauge (#56) =====================
+// A translucent disc around the launcher mount; the bot's allowed range (rotated by the terrain tilt) is highlighted;
+// the red needle shows the exact direction the shot leaves the bot.
+// Team colours (decision #62): you + allies = green, enemies = red (classic).
+const TEAM_COL = { ally: ['rgba(60,210,90,0.5)', 'rgba(10,90,30,0.6)', '#19c94a'], enemy: ['rgba(255,70,50,0.5)', 'rgba(120,10,10,0.55)', '#ff1f1f'] };
+// thin Gunbound-style health bar just below the bot's feet (#90): 3 segments, drains smoothly
+function drawHpBar(W2S, s, P) {
+  const hp = P.hp ?? MAX_HP; P.hpShow = (P.hpShow ?? hp) + (hp - (P.hpShow ?? hp)) * 0.08;
+  const [cx, cy] = W2S(P.rx, P.ry + FEEL.sink.v + 10), w = 64 * s, h = Math.max(4, 6 * s), x = cx - w / 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(10,20,10,0.75)'; ctx.fillRect(x - 1.5, cy - 1.5, w + 3, h + 3);
+  ctx.fillStyle = '#c0392b'; ctx.fillRect(x, cy, w * P.hpShow / MAX_HP, h);                    // the draining part flashes red
+  const g = ctx.createLinearGradient(0, cy, 0, cy + h); g.addColorStop(0, '#8dff6a'); g.addColorStop(1, '#2fae2a');
+  ctx.fillStyle = g; ctx.fillRect(x, cy, w * hp / MAX_HP, h);
+  ctx.fillStyle = 'rgba(10,20,10,0.75)'; for (let i = 1; i < MAX_HP; i++) ctx.fillRect(x + w * i / MAX_HP - 0.75, cy, 1.5, h);
+  ctx.restore();
+}
+function drawAngleGauge(W2S, s, P = bot, team = 'ally') {
+  // Classic layout (#61): a RING band around the bot's body, outside its outline (ahead of the cannon),
+  // drawn BEHIND the bot so it never covers the bot's art. Centre = the body's middle, following the drawn tilt.
+  const col = TEAM_COL[team], g = gaugeGeom(P);
+  const [cx, cy] = W2S(g.cx, g.cy), rIn = g.rIn * s, rOut = g.rOut * s;
+  const wa = local => local - P.dir * P.rtilt * 180 / Math.PI;
+  const toScreen = deg => { const a = deg * Math.PI / 180; return Math.atan2(-Math.sin(a), Math.cos(a) * P.dir); };
+  // sweep from the low-aim end to the high-aim end in the bot's turning direction (never the long way round the circle)
+  const a0 = toScreen(wa(AIM_MIN())), a1 = toScreen(wa(AIM_MAX())), ccw = P.dir === 1;
+  ctx.save();
+  ctx.fillStyle = col[0]; ctx.strokeStyle = col[1]; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, rOut, a0, a1, ccw); ctx.arc(cx, cy, rIn, a1, a0, !ccw); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  for (let d = Math.ceil(AIM_MIN() / 10) * 10; d <= AIM_MAX(); d += 10) {
+    const t = toScreen(wa(d)), r0 = rOut - (rOut - rIn) * 0.45; ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(t) * r0, cy + Math.sin(t) * r0); ctx.lineTo(cx + Math.cos(t) * rOut, cy + Math.sin(t) * rOut); ctx.stroke();
+  }
+  const t = toScreen(wa(P.aim));
+  if (document.getElementById('debugChk').checked) { ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(t) * rOut, cy + Math.sin(t) * rOut); ctx.stroke(); }   // pivot -> needle (alignment check)
+  ctx.strokeStyle = col[2]; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx + Math.cos(t) * (rIn - 3 * s), cy + Math.sin(t) * (rIn - 3 * s));
+  ctx.lineTo(cx + Math.cos(t) * (rOut + 4 * s), cy + Math.sin(t) * (rOut + 4 * s)); ctx.stroke();
+  ctx.restore();
+}
+function drawAnglePanel(CH) {
+  const x = 14, y = CH - 74, w = 190, h = 58;
+  ctx.save();
+  ctx.fillStyle = 'rgba(16,22,40,0.85)'; ctx.strokeStyle = '#7fb2ff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, 14); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#9fb6dd'; ctx.font = '600 11px system-ui'; ctx.fillText('LAST', x + 12, y + 20);
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 16px system-ui'; ctx.fillText(me.lastAngle === null || me.lastAngle === undefined ? '--' : me.lastAngle + '°', x + 12, y + 42);
+  ctx.fillStyle = '#ffd34d'; ctx.font = '800 34px system-ui'; ctx.textAlign = 'right'; ctx.fillText(Math.round(worldAngle()) + '°', x + w - 12, y + 44);
+  ctx.restore();
+}
+
+// ===================== loop =====================
+let acc = 0, last = performance.now(), ALPHA = 0;
+// shots render BETWEEN physics ticks (interpolated), so a fast ball glides smoothly instead of stepping (#72)
+const lerpShot = sh => [sh.px === undefined ? sh.x : sh.px + (sh.x - sh.px) * ALPHA, sh.py === undefined ? sh.y : sh.py + (sh.y - sh.py) * ALPHA];
+// aim + power for a unit from a key-state object; remote units also start/fire from the space key state
+function driveUnit(P, k, myTurn, remote) {
+  if (myTurn && k.ArrowUp) P.aim = Math.min(AIM_MAX(), P.aim + 0.5);
+  if (myTurn && k.ArrowDown) P.aim = Math.max(AIM_MIN(), P.aim - 0.5);
+  if (remote) {
+    if (myTurn && k[' '] && !P.charging) { P.charging = true; P.power = 0; }
+    else if (P.charging && !k[' ']) { P.charging = false; fire(P); }
+  }
+  if (myTurn && P.charging) P.power = Math.min(100, P.power + 100 / (FEEL.fillTime.v * 60));   // full bar in fillTime seconds
+  if (!myTurn) P.charging = false;
+}
+function tick() {
+  simMs += TICK;
+  const aTurn = turn.state === 'player', bTurn = turn.state === 'ai' && Net.mode === 'host';
+  driveUnit(bot, aTurn ? keys : {}, aTurn, false);
+  if (Net.mode === 'host') driveUnit(foe, bTurn ? foeKeys : {}, bTurn, true);
+  stepBot(aTurn ? keys : {}); stepUnit(foe, bTurn ? foeKeys : {}, false); foe.gone = foe.ko; stepShots(); stepTurn();
+  if (Net.mode === 'host' && Net.inMatch && (Math.round(simMs / TICK) % 2 === 0)) sendSnap();
+}
+function frame(now) {
+  acc += Math.min(100, now - last); last = now;
+  while (acc >= TICK) { acc -= TICK;
+    if (!ready || !gameStarted) continue;                       // nothing runs (timer, AI) until 'click to play'
+    if (Net.mode === 'single') tick(); else if (Net.inMatch) { if (Net.mode === 'host') tick(); else guestTick(); }
+  }
+  ALPHA = Net.mode === 'guest' ? Math.min(1, (performance.now() - Net.lastSnapAt) / (2 * TICK)) : acc / TICK; Music.tick(); draw(); drawRoom(); requestAnimationFrame(frame);
+}
+function draw() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0d1220'; ctx.fillRect(0, 0, cv.width, cv.height);   // letterbox bars (device px; avoids the inner CW/CH names)
+  const VR = viewRect();
+  ctx.setTransform(DPR, 0, 0, DPR, VR.ox * DPR, VR.oy * DPR);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VR.vw, VR.vh); ctx.clip();
+  const CW = VR.vw, CH = VR.vh;          // inside the view, 'canvas size' = the fixed view's size
+  ctx.fillStyle = '#9cc8f0'; ctx.fillRect(0, 0, CW, CH);
+  if (!ready) { hud.textContent = 'Loading map…'; ctx.restore(); return; }
+  const s = viewScale(), vw = CW / s, vh = CH / s;
+  nowMs = performance.now();
+  const active = turn.state === 'ai' ? foe : turn.state === 'player' ? bot : me;
+  if (turn.state !== camTurnSeen) { camTurnSeen = turn.state; if (turn.state === 'player' || turn.state === 'ai') setFollow(true); }   // new turn: pan to whoever plays once, then the camera is free (#91)
+  const falling = [bot, foe].find(P => P.respawning && !P.dead);                  // a bot dropping back in from the sky
+  if ((follow || shots.length || falling || (camFocus && simMs < camHoldUntil)) && !whole) {   // a shot in flight ALWAYS takes the camera (#80)
+    let tx = active.x, ty = active.y, ease = 0.08;
+    if (shots.length) { [tx, ty] = lerpShot(shots[0]); ease = 0.12; }            // ride with the shot
+    else if (falling && !(camFocus && simMs < camHoldUntil)) { tx = falling.x; ty = Math.max(falling.y, 300); ease = 0.14; }   // follow the respawn fall
+    else if (camFocus && simMs < camHoldUntil) { [tx, ty] = camFocus; ease = 0.12; } // watch the impact resolve
+    else { camFocus = null; ease = 0.05; }                                             // pan back (next turn)
+    cam.x += (tx - vw / 2 - cam.x) * ease; cam.y += (ty - vh * 0.55 - cam.y) * ease;
+  }
+  if (shake > 0.2) { cam.x += (Math.random() - 0.5) * shake; cam.y += (Math.random() - 0.5) * shake; shake *= 0.86;
+  }
+  if (whole) { cam.x = 0; cam.y = 0; }
+  cam.x = Math.max(0, Math.min(W - vw, cam.x)); cam.y = Math.max(0, Math.min(H - vh, cam.y));
+  const b = bgCanvas();
+  if (b) {
+    if (whole) { const k = Math.max(CW / b.width, CH / b.height); ctx.drawImage(b, 0, 0, b.width * k, b.height * k); }
+    else { const p = MAP.background.parallax; ctx.drawImage(b, -cam.x * p * s, -cam.y * p * s, b.width * s, b.height * s); }
+  }
+  ctx.drawImage(land, cam.x, cam.y, vw, vh, 0, 0, CW, CH);
+  const W2S = (x, y) => [(x - cam.x) * s, (y - cam.y) * s];
+  // bot: animated rig at its ground point, tilted to the terrain, sunk a little so the feet look planted
+  const lastShot = lastShots[mySide()];
+  if (lastShot && document.getElementById('trailChk').checked) {   // last shot's path (practice aid)
+    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.beginPath();
+    lastShot.trail.forEach(([x, y], k) => { const [px, py] = W2S(x, y); k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke(); ctx.setLineDash([]);
+    if (lastShot.end) { const [ex, ey] = W2S(...lastShot.end); ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ex - 9, ey - 9); ctx.lineTo(ex + 9, ey + 9); ctx.moveTo(ex + 9, ey - 9); ctx.lineTo(ex - 9, ey + 9); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (!foe.gone && !foe.dead && foe.placed) {
+    drawAngleGauge(W2S, s, foe, me === foe ? 'ally' : 'enemy');
+    const [fx, fy] = W2S(foe.rx, foe.ry + FEEL.sink.v), k = FEEL.botScale.v;
+    ctx.save(); ctx.translate(fx, fy); ctx.rotate(foe.rtilt); ctx.scale(foe.dir * s * k, s * k);
+    window.KekRig.draw(ctx, RIG, foe, { legSwing: FEEL.legSwing.v }, foeRider); ctx.restore();
+  }
+  for (const P of [foe, bot]) if (!P.ko && !P.dead && !P.gone) drawHpBar(W2S, s, P);
+  if (!bot.ko && !bot.dead) {
+    drawAngleGauge(W2S, s, bot, me === bot ? 'ally' : 'enemy');   // behind the bot (#61)
+    const [sx, sy] = W2S(bot.rx, bot.ry + FEEL.sink.v), k = FEEL.botScale.v;
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(bot.rtilt); ctx.scale(bot.dir * s * k, s * k);
+    window.KekRig.draw(ctx, RIG, bot, { legSwing: FEEL.legSwing.v }, rider);
+    ctx.restore();
+    if (document.getElementById('debugChk').checked) {
+      const fs = FEEL.feet.v * k;
+      for (const [fx, fy] of [[me.x - fs, me.feetY[0]], [me.x + fs, me.feetY[1]]]) { const [px, py] = W2S(fx, fy); ctx.fillStyle = '#ff2d55'; ctx.beginPath(); ctx.arc(px, py, 5, 0, 7); ctx.fill(); }
+      const [lx, ly] = W2S(me.x + me.dir * (fs + FEEL.look.v * k), me.y); ctx.fillStyle = me.blocked ? '#ff2d55' : '#33d17a'; ctx.fillRect(lx - 4, ly - 4, 8, 8);
+    }
+  }
+  for (const sh of shots) { const [x, y] = W2S(...lerpShot(sh)); ctx.fillStyle = '#ffb83b'; ctx.strokeStyle = '#7a4a10'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 9 * s, 0, 7); ctx.fill(); ctx.stroke(); }
+  for (const p of parts) { const [x, y] = W2S(p.x, p.y); ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(x, y, p.r * s, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  for (let i = puffs.length - 1; i >= 0; i--) { const f = puffs[i]; f.t += 1 / 60; f.y += f.vy; if (f.t > f.life) { puffs.splice(i, 1); continue; }
+    const k = f.t / f.life, [fx, fy] = W2S(f.x, f.y); ctx.save(); ctx.globalAlpha = 0.9 * (1 - k);
+    ctx.fillStyle = k < 0.18 ? '#ffb02e' : '#fff3df'; ctx.strokeStyle = '#7a4a2a'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(fx, fy, (f.r0 * (0.6 + k * 0.9)) * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  for (let i = rings.length - 1; i >= 0; i--) { const g = rings[i]; g.t += 1 / 60; if (g.t > 0.6) { rings.splice(i, 1); continue; }
+    const [rx, ry] = W2S(g.x, g.y), k = g.t / 0.6; ctx.save(); ctx.globalAlpha = 1 - k; ctx.strokeStyle = '#fff6c2'; ctx.lineWidth = 10 * (1 - k) + 2;
+    ctx.beginPath(); ctx.arc(rx, ry, (20 + 170 * k) * s, 0, Math.PI * 2); ctx.stroke();
+    if (g.t < 0.12) { ctx.globalAlpha = 0.9 * (1 - g.t / 0.12); ctx.fillStyle = '#fff6c2'; ctx.beginPath(); ctx.arc(rx, ry, 95 * s, 0, Math.PI * 2); ctx.fill(); } ctx.restore(); }
+  if (MAP.weather === 'snow' && document.getElementById('snowChk').checked) {
+    ctx.fillStyle = '#ffffffd0';
+    for (const f of flakes) {
+      f.y += 0.0009 * f.z; f.w += 0.02; if (f.y > 1.02) { f.y = -0.02; f.x = Math.random(); }
+      const x = ((f.x * CW + Math.sin(f.w) * 12 - cam.x * s * 0.15 * f.z) % CW + CW) % CW, y = f.y * CH;
+      ctx.beginPath(); ctx.arc(x, y, 1.6 * f.z * (s * 1.4), 0, 7); ctx.fill();
+    }
+  }
+  const ar = n => (n > 0 ? '→' : '←').repeat(Math.min(3, Math.ceil(Math.abs(n) / 4)));
+  hud.textContent = Net.mode === 'single' ? `${MAP.name}   Hits: You ${score.player} – AI ${score.ai}` : `${MAP.name}   ${Net.mode === 'host' ? 'HOST (you)' : 'HOST'} ${score.player} – ${score.ai} ${Net.mode === 'guest' ? 'GUEST (you)' : 'GUEST'}`;
+  const bw = Math.min(420, CW * 0.4), bx = (CW - bw) / 2, by = CH - 40;
+  ctx.fillStyle = '#000a'; ctx.fillRect(bx - 4, by - 4, bw + 8, 22); ctx.fillStyle = '#ff7a3b'; ctx.fillRect(bx, by, bw * me.power / 100, 14);
+  if (me.lastPower !== null && me.lastPower !== undefined) { const lx = bx + bw * me.lastPower / 100; ctx.fillStyle = '#ffe14d'; ctx.fillRect(lx - 1.5, by - 7, 3, 28); }   // last-shot marker (classic)
+  for (let i = 1; i < 10; i++) { ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(bx + bw * i / 10 - 0.5, by, 1, 14); }   // tenths ruler
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bx - 4, by - 26, 210, 18);
+  ctx.fillStyle = '#fff'; ctx.font = '700 13px system-ui'; ctx.textAlign = 'left';
+  ctx.fillText(`POWER  ${(+me.power).toFixed(1)}${me.lastPower !== null && me.lastPower !== undefined ? `   (last ${(+me.lastPower).toFixed(1)})` : ''}`, bx, by - 10);
+  drawAnglePanel(CH);
+  drawWindGauge(CW);
+  drawTurnTimer(CW);
+  for (let i = popups.length - 1; i >= 0; i--) {
+    const p = popups[i]; p.t += 1 / 60; if (p.t > 1.4) { popups.splice(i, 1); continue; }
+    const [px, py] = W2S(p.x, p.y - p.t * 40); ctx.save(); ctx.globalAlpha = Math.min(1, 2 - p.t * 1.4); ctx.textAlign = 'center';
+    ctx.font = '900 34px system-ui'; ctx.lineWidth = 6; ctx.strokeStyle = '#3a1500'; ctx.strokeText(p.text, px, py); ctx.fillStyle = '#ffd34d'; ctx.fillText(p.text, px, py); ctx.restore();
+  }
+  ctx.restore();
+}
+// Turn timer (#86): under the compass, cute yellow bubble numbers; pulses in the last 5 s
+function drawTurnTimer(CW) {
+  if (turn.state !== 'player' && turn.state !== 'ai') return;
+  const mine = turn.state === mySide(), left = Math.max(0, Math.ceil(TURN_TIME - turn.t)), cx = CW / 2, y = 152, low = left <= 5 && mine;
+  const k = low ? 1 + 0.12 * Math.max(0, Math.sin(turn.t * Math.PI * 2)) : 1;
+  ctx.save(); ctx.translate(cx, y); ctx.scale(k, k); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '700 40px Fredoka, "Baloo 2", "Comic Sans MS", system-ui'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 9; ctx.strokeStyle = '#7a3e00'; ctx.strokeText(String(left), 0, 0);
+  const g = ctx.createLinearGradient(0, -18, 0, 18); g.addColorStop(0, low ? '#fff1a8' : '#fff59a'); g.addColorStop(1, low ? '#ff9a3c' : '#ffc928');
+  ctx.fillStyle = g; ctx.fillText(String(left), 0, 0);
+  ctx.globalAlpha = 0.55; ctx.fillStyle = '#ffffff'; ctx.font = '700 40px Fredoka, "Baloo 2", system-ui'; ctx.save(); ctx.beginPath(); ctx.rect(-40, -22, 80, 12); ctx.clip(); ctx.fillText(String(left), 0, 0); ctx.restore();
+  ctx.globalAlpha = 1; ctx.font = '700 13px Fredoka, system-ui'; ctx.lineWidth = 4; ctx.strokeStyle = '#7a3e00';
+  const lab = mine ? 'YOUR TURN' : (Net.mode === 'single' ? 'AI TURN' : "OPPONENT'S TURN"); ctx.strokeText(lab, 0, 30); ctx.fillStyle = '#fff59a'; ctx.fillText(lab, 0, 30);
+  ctx.restore();
+}
+// Wind compass (#83): top centre. The arrow points where the wind BLOWS; its length + colour grow with strength.
+function drawWindGauge(CW) {
+  const cx = CW / 2, cy = 62, R = 44, st = wind.s, a = -wind.d * Math.PI / 180;   // canvas y is down
+  ctx.save();
+  ctx.fillStyle = 'rgba(16,22,40,0.85)'; ctx.strokeStyle = '#7fb2ff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+  for (let k = 0; k < 16; k++) { const t = k * Math.PI / 8, r0 = k % 4 ? R - 6 : R - 11; ctx.beginPath(); ctx.moveTo(cx + Math.cos(t) * r0, cy + Math.sin(t) * r0); ctx.lineTo(cx + Math.cos(t) * (R - 2), cy + Math.sin(t) * (R - 2)); ctx.stroke(); }
+  ctx.fillStyle = '#9fb6dd'; ctx.font = '700 10px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('N', cx, cy - R + 17); ctx.fillText('S', cx, cy + R - 17); ctx.fillText('W', cx - R + 17, cy); ctx.fillText('E', cx + R - 17, cy);
+  if (st > 0) {
+    const L = 14 + (R - 32) * Math.min(1, st / 30), col = st >= 20 ? '#ff5a3c' : st >= 10 ? '#ffb02e' : '#7fe08a';
+    const tx = cx + Math.cos(a) * L, ty = cy + Math.sin(a) * L, bx = cx - Math.cos(a) * 10, by = cy - Math.sin(a) * 10;
+    ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke();
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(tx + Math.cos(a) * 9, ty + Math.sin(a) * 9);
+    ctx.lineTo(tx + Math.cos(a + 2.4) * 9, ty + Math.sin(a + 2.4) * 9); ctx.lineTo(tx + Math.cos(a - 2.4) * 9, ty + Math.sin(a - 2.4) * 9); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(16,22,40,0.9)'; ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '800 15px system-ui'; ctx.fillText(String(st), cx, cy + 1);
+  ctx.fillStyle = 'rgba(16,22,40,0.85)'; ctx.beginPath(); ctx.roundRect(cx - 22, cy + R + 3, 44, 16, 8); ctx.fill();
+  ctx.fillStyle = '#cfe0ff'; ctx.font = '700 11px system-ui'; ctx.fillText('WIND', cx, cy + R + 11);
+  ctx.restore();
+}
+
+
+// ===================== boot + test hooks =====================
+const sel = document.getElementById('mapSel');
+sel.innerHTML = Object.values(window.MAPS).map(m => `<option value="${m.data.id}">${m.data.name}</option>`).join('');
+sel.onchange = () => { loadMap(sel.value); sel.blur(); };
+const q = new URLSearchParams(location.search); if (q.get('sim') || q.get('selfplay') || q.get('nostart')) setTimeout(() => startGame(), 0);
+if (q.get('mp') === 'host') setTimeout(() => { Net.host(); if (q.get('code')) { /* fixed code for tests */ } }, 300);
+if (q.get('join')) { document.getElementById('joinCode').value = q.get('join').toUpperCase().slice(0, 5); startMsg('You were invited to room ' + q.get('join').toUpperCase().slice(0, 5) + ' - click Join!'); document.getElementById('btnJoin').style.boxShadow = '0 0 0 4px #7fffa0'; }
+if (q.get('mp') === 'join') setTimeout(() => { document.getElementById('joinCode').value = q.get('code'); document.getElementById('btnJoin').click(); }, 300);
+if (location.pathname.includes('/dev/')) { const t = document.createElement('div'); t.textContent = 'WORK IN PROGRESS BUILD'; t.style.cssText = 'font:700 16px Fredoka,system-ui;color:#fff;background:#c0392b;padding:4px 12px;border-radius:8px;margin-top:6px'; document.querySelector('#start .menu').before(t); }
+window.__kb = { Net, turn, bot, foe, score, keysObj: () => keys, fire }; var RAW = q.get('raw') === '1';
+// any feel setting can be overridden from the URL, e.g. ?climb=70&stepUp=32 (sliders follow)
+for (const [k, s] of Object.entries(FEEL)) if (q.get(k) !== null) { s.v = +q.get(k); document.getElementById('f_' + k).textContent = s.v; document.getElementById('f_' + k).parentElement.nextSibling.value = s.v; }
+loadMap(q.get('map') && window.MAPS[q.get('map')] ? q.get('map') : 'hollyhearth'); sel.value = MAP.id;
+newWind(true);
+if (q.get('whole') === '1') setWhole(true);
+if (q.get('debug') === '1') document.getElementById('debugChk').checked = true;
+// ?sim=N fast-forward ticks; &hole=1 blasts a crater right ahead of the bot after landing; &drive=left|right holds a key during the sim
+if (q.get('sim')) setTimeout(function wait() {
+  if (!ready) return setTimeout(wait, 50);
+  for (let i = 0; i < 150; i++) tick();                                   // land first
+  if (q.get('wind')) { const [ws, wd] = q.get('wind').split(','); wind = { s: +ws, d: +wd }; }
+  if (q.get('aim')) bot.aim = +q.get('aim');
+  if (q.get('cannon')) { window.KekRig.setCannonMode(q.get('cannon')); document.getElementById('cannonSel').value = q.get('cannon'); }
+  if (q.get('boom') === 'foe') { for (let i = 0; i < 60; i++) tick(); explodeBot(foe); camFocus = [foe.x, foe.y]; camHoldUntil = foe.respawnAt; for (let i = 0; i < +(q.get('after') || 8); i++) tick(); setTimeout(() => { gameStarted = false; }, 0); }   // freeze for the screenshot
+  if (q.get('hole') === '1') { crater(Math.round(bot.x + 40), Math.round(bot.y), FEEL.craterR.v); }   // impact on the surface, like a real shot
+  if (q.get('hole') === '2') { const cx = Math.round(bot.x + 40), cy = Math.round(bot.y); crater(cx, cy, FEEL.craterR.v); crater(cx, cy + 40, FEEL.craterR.v); for (let i = 0; i < 120; i++) tick(); }   // deep double hole (the user's case)
+  if (q.get('drive')) keys[q.get('drive') === 'left' ? 'ArrowLeft' : 'ArrowRight'] = true;
+  for (let i = 0; i < +q.get('sim'); i++) tick();
+  keys.ArrowLeft = keys.ArrowRight = false;
+  if (q.get('fire')) { bot.power = 45; fire(bot); for (let i = 0; i < +q.get('fire'); i++) tick(); }
+  if (q.get('drive2')) {
+    keys[q.get('drive2') === 'left' ? 'ArrowLeft' : 'ArrowRight'] = true; const tr = [];
+    let jit = 0, prevT = null, prevD = 0, flips = 0;
+    for (let i = 0; i < +(q.get('sim2') || 300); i++) { tick(); const dt = (bot.rtilt ?? bot.tilt) * 57.3; if (prevT !== null) { const d = dt - prevT; jit += Math.abs(d); if (Math.abs(d) > 0.05) { if (prevD && Math.sign(d) !== Math.sign(prevD)) flips++; prevD = d; } } prevT = dt; if (i % 10 === 0) tr.push(`${i} x=${bot.x.toFixed(1)} y=${bot.y.toFixed(1)} air=${bot.air ? 1 : 0} blk=${bot.blocked ? 1 : 0} tilt=${(bot.tilt * 57.3).toFixed(0)} feet=${bot.feetY.map(v => Math.round(v)).join('/')}`); }
+    keys.ArrowLeft = keys.ArrowRight = false;
+    tr.unshift(`SUMMARY minY=${Math.round(Math.min(...tr.map(l => +l.split('y=')[1].split(' ')[0])))} finalX=${bot.x.toFixed(0)} tilt=${(bot.tilt*57.3).toFixed(0)} blk=${bot.blocked?1:0}`);
+    tr.unshift(`J ${jit.toFixed(0)} R ${flips}`);
+    if (q.get('trace') === '1') { const pre = document.createElement('pre'); pre.id = 'trace'; pre.textContent = tr.join('\n'); document.body.appendChild(pre); }
+  }
+}, 50);
+// ?selfplay=1: the player fires harmlessly off the map each turn; the AI plays for real. Reports the AI shot that first hits.
+if (q.get('selfplay') === '1') setTimeout(function wait() {
+  if (!ready) return setTimeout(wait, 50);
+  for (let i = 0; i < 150; i++) tick();
+  const log = [];
+  for (let i = 0; i < 60 * 2000 && score.ai === 0; i++) {
+    if (turn.state === 'player') { bot.dir = -1; bot.aim = 45; bot.power = 100; fire(bot); }
+    const before = turn.aiShots, hpB = bot.hp; tick();
+    if (bot.hp < hpB) log.push(`  -> HIT, player hp ${bot.hp}/${MAX_HP}`);
+    if (turn.aiShots > before) log.push(`AI shot ${turn.aiShots}: wind ${wind.s}@${wind.d}, plan aim ${turn.plan.local} pow ${turn.plan.power}`);
+  }
+  const pre = document.createElement('pre'); pre.style.cssText = 'position:fixed;left:0;top:0;margin:0;padding:6px;background:#fff;color:#000;font:12px monospace;z-index:9';
+  pre.textContent = `RESULT aiHits=${score.ai} aiShots=${turn.aiShots}` + String.fromCharCode(10) + log.join(String.fromCharCode(10)); document.body.appendChild(pre);
+}, 50);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

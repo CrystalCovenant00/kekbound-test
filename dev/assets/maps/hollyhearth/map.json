@@ -1,0 +1,68 @@
+{
+  "_doc": "Map format v0 (docs/TERRAIN.md §7). Seasonal (Christmas). land-present-island.png is the PRE-FIX version (fails walkability; L2 edit pending).",
+  "id": "hollyhearth",
+  "name": "Hollyhearth",
+  "world": [
+    3840,
+    1800
+  ],
+  "background": {
+    "img": "background.png",
+    "parallax": 0.5,
+    "haze": 0.18,
+    "blur": 1.0,
+    "hazeColor": [
+      236,
+      226,
+      236
+    ]
+  },
+  "lands": [
+    {
+      "img": "land-gingerbread-hill.png",
+      "x": 120,
+      "y": 760,
+      "scale": 0.82,
+      "flip": false
+    },
+    {
+      "img": "land-present-island.png",
+      "x": 1500,
+      "y": 470,
+      "scale": 0.62,
+      "flip": false
+    },
+    {
+      "img": "land-gingerbread-hill.png",
+      "x": 2420,
+      "y": 840,
+      "scale": 0.78,
+      "flip": true
+    }
+  ],
+  "outline": {
+    "color": "#2b1a0e",
+    "width": 5
+  },
+  "spawns": [
+    [
+      500,
+      300
+    ],
+    [
+      3200,
+      400
+    ]
+  ],
+  "wind": [
+    0,
+    30
+  ],
+  "weather": "snow",
+  "music": {
+    "src": "../../audio/music/kekbound-battle-theme-1.mp3",
+    "loopEnd": 145.0,
+    "xfade": 2.0,
+    "volume": 0.5
+  }
+}
