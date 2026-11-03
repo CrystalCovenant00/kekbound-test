@@ -49,8 +49,8 @@
     ],
     "visualMin": 0,
     "visualMax": 50,
-    "aimMin": 15,
-    "aimMax": 70,
+    "aimMin": 10,
+    "aimMax": 80,
     "reach": 301.5
   },
   "seed": null,
