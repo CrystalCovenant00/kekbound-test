@@ -1,0 +1,118 @@
+{
+  "id": "lodestar",
+  "name": "Lodestar",
+  "units": "concept px (= part px x scale); origin = ground under body centre; +y down",
+  "artScale": 0.10933,
+  "partScale": 1.34,
+  "parts": {
+    "body": "body.png",
+    "launcher": "launcher.png",
+    "hub": "hub.png",
+    "rider_front": "rider_front.png",
+    "moon": "moon.png"
+  },
+  "partScaleOverrides": {
+    "hub": 1.35
+  },
+  "body": {
+    "pivot": [
+      433.0,
+      417.5
+    ],
+    "at": [
+      0.0,
+      -599.5
+    ]
+  },
+  "hub": {
+    "pivot": [
+      28.0,
+      27.0
+    ],
+    "at": [
+      234.5,
+      -681.9
+    ],
+    "scale": 1.35
+  },
+  "launcher": {
+    "pivot": [
+      4,
+      55
+    ],
+    "mount": [
+      209.5,
+      -741.9
+    ],
+    "aimBase": 18.596809451229177,
+    "axisDeg": -0.6,
+    "muzzle": [
+      240,
+      2.5
+    ],
+    "visualMin": 0,
+    "visualMax": 50,
+    "aimMin": 15,
+    "aimMax": 80,
+    "reach": 246.2
+  },
+  "seed": null,
+  "legs": [],
+  "farLegs": null,
+  "rider": {
+    "seat": [
+      -9.8,
+      -579.0
+    ],
+    "height": 619.9,
+    "front": {
+      "pivot": [
+        291.5,
+        91.5
+      ],
+      "at": [
+        173.8,
+        -601.0
+      ]
+    },
+    "clipY": -582.7
+  },
+  "blink": null,
+  "extras": [
+    {
+      "img": "moon",
+      "pivot": [
+        132.0,
+        130.0
+      ],
+      "at": [
+        -292.2,
+        -729.0
+      ],
+      "scale": 1,
+      "layer": "back",
+      "anim": "moon"
+    }
+  ],
+  "drawOrder": [
+    "farLegs",
+    "legs",
+    "launcher",
+    "body",
+    "seedGlow",
+    "rider (waist-up)",
+    "riderFront",
+    "hub"
+  ],
+  "locomotion": "hover",
+  "hover": {
+    "gap": 40,
+    "circle": [
+      330,
+      45
+    ],
+    "bob": 6,
+    "color": "#d8ecff",
+    "style": "moon"
+  }
+}
