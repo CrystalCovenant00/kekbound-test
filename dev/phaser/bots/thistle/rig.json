@@ -52,7 +52,7 @@
     ],
     "visualMin": 0,
     "visualMax": 50,
-    "aimMin": 35,
+    "aimMin": 40,
     "aimMax": 90,
     "reach": 353.7
   },

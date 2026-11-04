@@ -50,7 +50,7 @@
     "visualMin": 0,
     "visualMax": 50,
     "aimMin": 10,
-    "aimMax": 90,
+    "aimMax": 75,
     "reach": 301.5
   },
   "seed": null,
