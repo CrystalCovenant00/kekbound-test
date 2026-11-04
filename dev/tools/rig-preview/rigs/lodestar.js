@@ -3,7 +3,7 @@ window.RIG_DATA = {
   "id": "lodestar",
   "name": "Lodestar",
   "units": "concept px (= part px x scale); origin = ground under body centre; +y down",
-  "artScale": 0.10933,
+  "artScale": 0.10422,
   "partScale": 1.34,
   "parts": {
     "body": "body.png",
@@ -65,7 +65,7 @@ window.RIG_DATA = {
       -9.8,
       -579.0
     ],
-    "height": 619.9,
+    "height": 650.3,
     "front": {
       "pivot": [
         291.5,
