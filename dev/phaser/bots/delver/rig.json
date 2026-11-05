@@ -1,0 +1,115 @@
+{
+  "id": "delver",
+  "name": "Delver",
+  "units": "concept px (= part px x scale); origin = ground under body centre; +y down",
+  "artScale": 0.09745,
+  "partScale": 1.42,
+  "parts": {
+    "body": "body.png",
+    "launcher": "launcher.png",
+    "hub": "hub.png",
+    "rider_front": "rider_front.png",
+    "leg_back": "leg_back.png",
+    "leg_front": "leg_front.png"
+  },
+  "partScaleOverrides": {},
+  "body": {
+    "pivot": [
+      419.0,
+      298.0
+    ],
+    "at": [
+      0.0,
+      -471.8
+    ]
+  },
+  "hub": {
+    "pivot": [
+      103.0,
+      74.5
+    ],
+    "at": [
+      71.0,
+      -713.2
+    ],
+    "scale": 1
+  },
+  "launcher": {
+    "pivot": [
+      3.7,
+      100.0
+    ],
+    "mount": [
+      71.0,
+      -713.2
+    ],
+    "aimBase": 19.5350655623309,
+    "axisDeg": 2.46,
+    "muzzle": [
+      232.3,
+      -10.0
+    ],
+    "visualMin": 0,
+    "visualMax": 70,
+    "aimMin": -90,
+    "aimMax": 80,
+    "artMin": 0,
+    "reach": 283.5
+  },
+  "seed": null,
+  "legs": [
+    {
+      "img": "leg_back",
+      "pivot": [
+        137.0,
+        53.2
+      ],
+      "at": [
+        -332.3,
+        -226.8
+      ]
+    },
+    {
+      "img": "leg_front",
+      "pivot": [
+        135.5,
+        52.0
+      ],
+      "at": [
+        211.0,
+        -221.5
+      ]
+    }
+  ],
+  "farLegs": null,
+  "rider": {
+    "seat": [
+      -162.1,
+      -628.2
+    ],
+    "height": 695.4,
+    "front": {
+      "pivot": [
+        254.5,
+        106.5
+      ],
+      "at": [
+        -105.4,
+        -529.9
+      ]
+    },
+    "clipY": -508.6
+  },
+  "blink": null,
+  "extras": [],
+  "drawOrder": [
+    "farLegs",
+    "legs",
+    "launcher",
+    "body",
+    "seedGlow",
+    "rider (waist-up)",
+    "riderFront",
+    "hub"
+  ]
+}
