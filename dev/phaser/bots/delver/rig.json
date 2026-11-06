@@ -49,11 +49,11 @@
       232.3,
       -10.0
     ],
-    "visualMin": 0,
-    "visualMax": 70,
-    "aimMin": -90,
-    "aimMax": 80,
-    "artMin": 0,
+    "visualMin": 45,
+    "visualMax": 90,
+    "aimMin": 45,
+    "aimMax": 90,
+    "artMax": 65,
     "reach": 283.5
   },
   "seed": null,
