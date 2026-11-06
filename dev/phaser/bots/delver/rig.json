@@ -49,10 +49,10 @@
       232.3,
       -10.0
     ],
-    "visualMin": 45,
-    "visualMax": 90,
-    "aimMin": 45,
-    "aimMax": 90,
+    "visualMin": 20,
+    "visualMax": 85,
+    "aimMin": 20,
+    "aimMax": 85,
     "artMax": 65,
     "reach": 283.5
   },
