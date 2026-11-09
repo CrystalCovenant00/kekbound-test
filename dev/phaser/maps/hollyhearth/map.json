@@ -1,5 +1,5 @@
 {
-  "_doc": "Map format v0 (docs/TERRAIN.md §7). Seasonal (Christmas). land-present-island.png is the PRE-FIX version (fails walkability; L2 edit pending).",
+  "_doc": "Map format v0. #234 THE GREAT HEARTH (Hollyhearth remade): giant objects in a cozy living room on Christmas morning, at different heights; a gap is a fall. Astra brief 25, assembled by Claude. The old islands: art-tests/map-hollyhearth/old-installed/.",
   "id": "hollyhearth",
   "name": "Hollyhearth",
   "world": [
@@ -9,36 +9,49 @@
   "background": {
     "img": "background.png",
     "parallax": 0.5,
-    "haze": 0.18,
-    "blur": 1.0,
+    "haze": 0.1,
+    "blur": 1.2,
     "hazeColor": [
+      255,
       236,
-      226,
-      236
-    ],
-    "sky": "background-sky.png"
+      210
+    ]
   },
   "lands": [
     {
-      "img": "land-gingerbread-hill.png",
-      "x": 120,
-      "y": 760,
-      "scale": 0.82,
+      "img": "land-mantel.png",
+      "x": 96,
+      "y": 722,
+      "scale": 0.7449,
       "flip": false
     },
     {
-      "img": "land-present-island.png",
-      "x": 1500,
-      "y": 470,
-      "scale": 0.62,
+      "img": "land-tower.png",
+      "x": 1170,
+      "y": 792,
+      "scale": 0.4543,
       "flip": false
     },
     {
-      "img": "land-gingerbread-hill.png",
-      "x": 2420,
-      "y": 840,
-      "scale": 0.78,
-      "flip": true
+      "img": "land-wreath.png",
+      "x": 1817,
+      "y": 822,
+      "scale": 0.2276,
+      "flip": false
+    },
+    {
+      "img": "land-mug.png",
+      "x": 2120,
+      "y": 842,
+      "scale": 0.7149,
+      "flip": false
+    },
+    {
+      "img": "land-chair.png",
+      "x": 2970,
+      "y": 780,
+      "scale": 0.6042,
+      "flip": false
     }
   ],
   "outline": {
@@ -47,23 +60,83 @@
   },
   "spawns": [
     [
-      500,
+      560,
       300
     ],
     [
-      3200,
-      400
+      3300,
+      300
     ]
   ],
   "wind": [
     0,
     30
   ],
-  "weather": "snow",
+  "weather": "none",
   "music": {
     "src": "../../audio/music/kekbound-battle-theme-1.mp3",
     "loopEnd": 145.0,
     "xfade": 2.0,
     "volume": 0.5
+  },
+  "noSpawn": [
+    [
+      1790,
+      2100
+    ],
+    [
+      2105,
+      2215
+    ]
+  ],
+  "light": {
+    "_doc": "#234 Christmas morning firelight: a warm golden grade, the fire glowing, a warm vignette, the floor far below in warm shadow",
+    "grade": [
+      255,
+      226,
+      190
+    ],
+    "strength": 0.35,
+    "bg": 0.1,
+    "botTint": 0.3,
+    "vignette": 0.3,
+    "vignetteColor": [
+      70,
+      35,
+      15
+    ],
+    "fog": {
+      "y0": 1170,
+      "y1": 1350,
+      "color": [
+        62,
+        34,
+        22
+      ]
+    },
+    "glows": [
+      {
+        "x": 545,
+        "y": 1290,
+        "r": 340,
+        "color": [
+          255,
+          150,
+          60
+        ],
+        "flicker": 0.35
+      },
+      {
+        "x": 545,
+        "y": 1180,
+        "r": 200,
+        "color": [
+          255,
+          190,
+          90
+        ],
+        "flicker": 0.3
+      }
+    ]
   }
 }
