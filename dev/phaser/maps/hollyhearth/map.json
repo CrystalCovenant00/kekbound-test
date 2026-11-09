@@ -1,5 +1,5 @@
 {
-  "_doc": "Map format v0. #234 THE GREAT HEARTH (Hollyhearth remade): giant objects in a cozy living room on Christmas morning, at different heights; a gap is a fall. Astra brief 25, assembled by Claude. The old islands: art-tests/map-hollyhearth/old-installed/.",
+  "_doc": "Map format v0. #238 HOLLYHEARTH: THE CHRISTMAS DREAM: giant Christmas objects on sunrise cloud cushions at different heights in a dream sky (Astra 25 H2-H8). The old islands: art-tests/map-hollyhearth/old-installed/.",
   "id": "hollyhearth",
   "name": "Hollyhearth",
   "world": [
@@ -10,47 +10,75 @@
     "img": "background.png",
     "parallax": 0.5,
     "haze": 0.1,
-    "blur": 1.2,
+    "blur": 1.0,
     "hazeColor": [
       255,
-      236,
-      210
+      222,
+      230
     ]
   },
   "lands": [
     {
       "img": "land-mantel.png",
-      "x": 96,
-      "y": 722,
-      "scale": 0.7449,
+      "x": 60,
+      "y": 700,
+      "scale": 0.6727,
+      "flip": false
+    },
+    {
+      "img": "land-mantel-cloud.png",
+      "x": -5,
+      "y": 1194,
+      "scale": 1.4497,
       "flip": false
     },
     {
       "img": "land-tower.png",
-      "x": 1170,
-      "y": 792,
+      "x": 1030,
+      "y": 960,
       "scale": 0.4543,
       "flip": false
     },
     {
+      "img": "land-tower-cloud.png",
+      "x": 995,
+      "y": 1420,
+      "scale": 1.605,
+      "flip": false
+    },
+    {
       "img": "land-wreath.png",
-      "x": 1817,
-      "y": 822,
-      "scale": 0.2276,
+      "x": 1660,
+      "y": 600,
+      "scale": 0.4622,
       "flip": false
     },
     {
       "img": "land-mug.png",
-      "x": 2120,
-      "y": 842,
-      "scale": 0.7149,
+      "x": 2330,
+      "y": 960,
+      "scale": 0.5866,
+      "flip": false
+    },
+    {
+      "img": "land-mug-cloud.png",
+      "x": 2279,
+      "y": 1327,
+      "scale": 1.5081,
       "flip": false
     },
     {
       "img": "land-chair.png",
-      "x": 2970,
-      "y": 780,
-      "scale": 0.6042,
+      "x": 3080,
+      "y": 640,
+      "scale": 0.5287,
+      "flip": true
+    },
+    {
+      "img": "land-chair-cloud.png",
+      "x": 3024,
+      "y": 1042,
+      "scale": 1.4448,
       "flip": false
     }
   ],
@@ -79,46 +107,28 @@
     "xfade": 2.0,
     "volume": 0.5
   },
-  "noSpawn": [
-    [
-      1790,
-      2100
-    ],
-    [
-      2105,
-      2215
-    ]
-  ],
+  "noSpawn": [],
   "light": {
-    "_doc": "#234 Christmas morning firelight: a warm golden grade, the fire glowing, a warm vignette, the floor far below in warm shadow",
+    "_doc": "#238 a soft sunrise: a warm pink-gold grade, the fire glowing, a gentle warm vignette",
     "grade": [
       255,
-      226,
-      190
+      228,
+      214
     ],
-    "strength": 0.35,
-    "bg": 0.1,
+    "strength": 0.3,
+    "bg": 0.0,
     "botTint": 0.3,
-    "vignette": 0.3,
+    "vignette": 0.22,
     "vignetteColor": [
-      70,
-      35,
-      15
+      120,
+      60,
+      80
     ],
-    "fog": {
-      "y0": 1170,
-      "y1": 1350,
-      "color": [
-        62,
-        34,
-        22
-      ]
-    },
     "glows": [
       {
-        "x": 545,
-        "y": 1290,
-        "r": 340,
+        "x": 465,
+        "y": 1150,
+        "r": 260,
         "color": [
           255,
           150,
@@ -127,9 +137,9 @@
         "flicker": 0.35
       },
       {
-        "x": 545,
-        "y": 1180,
-        "r": 200,
+        "x": 465,
+        "y": 1060,
+        "r": 170,
         "color": [
           255,
           190,
@@ -140,13 +150,13 @@
     ]
   },
   "spawnPoints": [
-    250,
-    550,
-    850,
-    1450,
-    2450,
-    3100,
-    3400,
-    3700
+    160,
+    470,
+    780,
+    1250,
+    1920,
+    2650,
+    3420,
+    3720
   ]
 }
