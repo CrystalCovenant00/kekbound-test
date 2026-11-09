@@ -1,0 +1,92 @@
+{
+  "_doc": "Map format v0 (docs/TERRAIN.md \u00a77). Christmas side B (#231): one connected strip. Assembled by Claude from Astra brief 24.",
+  "id": "candlewick",
+  "name": "Candlewick Lane",
+  "world": [
+    3840,
+    1800
+  ],
+  "background": {
+    "img": "background.png",
+    "parallax": 0.5,
+    "haze": 0.12,
+    "blur": 1.0,
+    "hazeColor": [
+      40,
+      70,
+      160
+    ]
+  },
+  "lands": [
+    {
+      "img": "land-trestle.png",
+      "x": 985,
+      "y": 1002,
+      "scale": 0.4397,
+      "flip": false
+    },
+    {
+      "img": "land-west.png",
+      "x": 70,
+      "y": 842,
+      "scale": 0.737,
+      "flip": false
+    },
+    {
+      "img": "land-hill.png",
+      "x": 1528,
+      "y": 737,
+      "scale": 0.8186,
+      "flip": false
+    },
+    {
+      "img": "land-east.png",
+      "x": 2445,
+      "y": 849,
+      "scale": 0.8521,
+      "flip": false
+    },
+    {
+      "img": "land-star.png",
+      "x": 2635,
+      "y": 741,
+      "scale": 0.1711,
+      "flip": false
+    }
+  ],
+  "outline": {
+    "color": "#2b1a0e",
+    "width": 5
+  },
+  "spawns": [
+    [
+      180,
+      300
+    ],
+    [
+      3640,
+      300
+    ]
+  ],
+  "wind": [
+    0,
+    30
+  ],
+  "weather": "snow",
+  "music": {
+    "src": "../../audio/music/kekbound-battle-theme-1.mp3",
+    "loopEnd": 145.0,
+    "xfade": 2.0,
+    "volume": 0.5
+  },
+  "noSpawn": [
+    [
+      960,
+      1580
+    ],
+    [
+      2490,
+      3040
+    ]
+  ]
+}
