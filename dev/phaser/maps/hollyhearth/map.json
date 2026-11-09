@@ -20,65 +20,65 @@
   "lands": [
     {
       "img": "land-mantel.png",
-      "x": 60,
-      "y": 700,
-      "scale": 0.6727,
+      "x": 80,
+      "y": 380,
+      "scale": 0.525,
       "flip": false
     },
     {
       "img": "land-mantel-cloud.png",
-      "x": -5,
-      "y": 1194,
-      "scale": 1.4497,
+      "x": 29,
+      "y": 766,
+      "scale": 1.1311,
       "flip": false
     },
     {
       "img": "land-tower.png",
-      "x": 1030,
-      "y": 960,
-      "scale": 0.4543,
+      "x": 640,
+      "y": 1150,
+      "scale": 0.3905,
       "flip": false
     },
     {
       "img": "land-tower-cloud.png",
-      "x": 995,
-      "y": 1420,
-      "scale": 1.605,
+      "x": 610,
+      "y": 1545,
+      "scale": 1.3793,
       "flip": false
     },
     {
       "img": "land-wreath.png",
-      "x": 1660,
-      "y": 600,
-      "scale": 0.4622,
+      "x": 1680,
+      "y": 720,
+      "scale": 0.4267,
       "flip": false
     },
     {
       "img": "land-mug.png",
-      "x": 2330,
-      "y": 960,
-      "scale": 0.5866,
+      "x": 2540,
+      "y": 1170,
+      "scale": 0.5133,
       "flip": false
     },
     {
       "img": "land-mug-cloud.png",
-      "x": 2279,
-      "y": 1327,
-      "scale": 1.5081,
+      "x": 2495,
+      "y": 1492,
+      "scale": 1.3191,
       "flip": false
     },
     {
       "img": "land-chair.png",
-      "x": 3080,
-      "y": 640,
-      "scale": 0.5287,
+      "x": 3120,
+      "y": 380,
+      "scale": 0.4834,
       "flip": true
     },
     {
       "img": "land-chair-cloud.png",
-      "x": 3024,
-      "y": 1042,
-      "scale": 1.4448,
+      "x": 3069,
+      "y": 748,
+      "scale": 1.3203,
       "flip": false
     }
   ],
@@ -126,9 +126,9 @@
     ],
     "glows": [
       {
-        "x": 465,
-        "y": 1150,
-        "r": 260,
+        "x": 396,
+        "y": 735,
+        "r": 190,
         "color": [
           255,
           150,
@@ -137,9 +137,9 @@
         "flicker": 0.35
       },
       {
-        "x": 465,
-        "y": 1060,
-        "r": 170,
+        "x": 396,
+        "y": 670,
+        "r": 120,
         "color": [
           255,
           190,
@@ -150,12 +150,12 @@
     ]
   },
   "spawnPoints": [
-    160,
-    470,
-    780,
-    1250,
+    180,
+    500,
+    900,
     1920,
-    2650,
+    2670,
+    2970,
     3420,
     3720
   ]
