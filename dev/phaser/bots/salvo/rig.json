@@ -1,6 +1,6 @@
 {
   "id": "salvo",
-  "name": "Snow Mammoth",
+  "name": "Rimetusk",
   "units": "concept px (= part px x scale); origin = ground under body centre; +y down",
   "artScale": 0.09047,
   "partScale": 1.22,
