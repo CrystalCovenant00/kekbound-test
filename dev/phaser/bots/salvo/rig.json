@@ -10,7 +10,9 @@
     "hub": "hub.png",
     "rider_front": "rider_front.png",
     "leg_back": "leg_back.png",
-    "leg_front": "leg_front.png"
+    "leg_front": "leg_front.png",
+    "leg_far_back": "leg_far_back.png",
+    "leg_near_back": "leg_near_back.png"
   },
   "partScaleOverrides": {},
   "body": {
@@ -59,14 +61,39 @@
   "seed": null,
   "legs": [
     {
+      "img": "leg_far_back",
+      "pivot": [
+        118.0,
+        82.5
+      ],
+      "ph": 3.1416,
+      "at": [
+        -225.4,
+        -317.9
+      ]
+    },
+    {
       "img": "leg_back",
       "pivot": [
         118.0,
         82.5
       ],
+      "ph": 0,
       "at": [
         215.6,
-        -301.9
+        -311.9
+      ]
+    },
+    {
+      "img": "leg_near_back",
+      "pivot": [
+        129.5,
+        86.2
+      ],
+      "ph": 0,
+      "at": [
+        -420.9,
+        -315.7
       ]
     },
     {
@@ -75,6 +102,7 @@
         129.5,
         86.2
       ],
+      "ph": 3.1416,
       "at": [
         31.5,
         -315.7
