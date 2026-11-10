@@ -51,9 +51,10 @@
     ],
     "visualMin": 0,
     "visualMax": 50,
-    "aimMin": 25,
-    "aimMax": 85,
-    "reach": 336.4
+    "aimMin": 10,
+    "aimMax": 110,
+    "reach": 336.4,
+    "artMax": 80
   },
   "seed": null,
   "legs": [],
